@@ -20,3 +20,19 @@ MacOS的dpi机制和win下不一样，比如1080p的屏幕在win下有125%、150
 $ sh -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"
 ```
 
+![运行](https://i.loli.net/2018/04/03/5ac2963c7b26b.png)
+
+### 恢复
+
+如果使用此脚本后，开机无法进入系统，请到恢复模式中，使用终端删除 `/System/Library/Displays/Contents/Resources/Overrides` 下删除显示器VendorID对应的文件夹，并把backup文件夹中的备份复制出来。
+
+具体命令如下：
+```
+$ cd /Volumes/你的系统盘/System/Library/Displays/Contents/Resources/Overrides
+$ VendorID=$(ioreg -l | grep "DisplayVendorID" | awk '{print $8}')
+$ Vid=$(echo "obase=16;$VendorID" | bc | tr 'A-Z' 'a-z')
+$ rm -rf ./DisplayVendorID-$Vid
+$ cp -r ./backup/* ./
+```
+
+
