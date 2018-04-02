@@ -1,8 +1,8 @@
 #!/bin/sh
-
+# 
+# 初始化
 function init()
 {
-
 #
 cat << EEF
 ----------------------------------------
@@ -36,13 +36,16 @@ EEF
     lgicon=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.tiff"
 
     if [[ ! -d $thatDir/backup ]]; then
-        echo "正在备份，请输入密码"
+        echo "正在备份"
         sudo mkdir -p $thatDir/backup
         sudo cp $thatDir/Icons.plist $thatDir/backup/
-        sudo cp -r $thatDir/DisplayVendorID-$Vid $thatDir/backup/
+        if [[ -d $thatDir/DisplayVendorID-$Vid ]]; then
+            sudo cp -r $thatDir/DisplayVendorID-$Vid $thatDir/backup/
+        fi
     fi
 }
 
+# 选择ICON
 function choose_icon()
 {
     #
@@ -97,25 +100,12 @@ fi
 
 }
 
-function enable_hidpi()
-{
-    theEDID=$EDID
-    main
-}
-
-function enable_hidpi_with_patch()
-{
-    theEDID=$EDid
-    main
-}
-
+# 主函数
 function main()
 {
-    #
-    choose_icon
-    mkdir -p $thisDir/tmp/DisplayVendorID-$Vid
+    sudo mkdir -p $thisDir/tmp/DisplayVendorID-$Vid
     dpiFile=$thisDir/tmp/DisplayVendorID-$Vid/DisplayProductID-$Pid
-    sudo chmod -R 777 $thisDir
+    sudo chmod -R 777 $thisDir/tmp/
 
 # 
 cat > "$dpiFile" <<-\HIDPI
@@ -130,9 +120,7 @@ cat > "$dpiFile" <<-\HIDPI
         <key>DisplayProductName</key>
             <string>Color LCD</string>
         <key>IODisplayEDID</key>
-            <data>
-            EDid
-            </data>
+            <data>EDid</data>
         <key>scale-resolutions</key>
             <array>
                 <data>
@@ -154,18 +142,39 @@ cat > "$dpiFile" <<-\HIDPI
 </plist>
 HIDPI
 
-    #
     sed -i '' "s/VID/$VendorID/g" $dpiFile
     sed -i '' "s/PID/$ProductID/g" $dpiFile
-    sed -i '' "s:EDid:${theEDID}:g" $dpiFile
-
-    sudo cp -r $thisDir/tmp/* $thatDir/
-    rm -rf $thisDir/tmp
-    echo "开启成功，重启生效"
-    echo "首次重启开机logo会变得巨大，之后就不会了"
-
 }
 
+# 擦屁股
+function end()
+{
+    sudo cp -r $thisDir/tmp/* $thatDir/
+    sudo rm -rf $thisDir/tmp
+    echo "开启成功，重启生效"
+    echo "首次重启开机logo会变得巨大，之后就不会了"
+}
+
+# 开
+function enable_hidpi()
+{
+    choose_icon
+    main
+    sed -i "" "/.*IODisplayEDID/d" $dpiFile
+    sed -i "" "/.*EDid/d" $dpiFile
+    end
+}
+
+# 开挂
+function enable_hidpi_with_patch()
+{
+    choose_icon
+    main
+    sed -i '' "s:EDid:${EDid}:g" $dpiFile
+    end
+}
+
+# 关
 function disable()
 {
     sudo rm -rf $thatDir/DisplayVendorID-$Vid 
