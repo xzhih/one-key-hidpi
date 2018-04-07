@@ -113,14 +113,36 @@ cat > "$dpiFile" <<-\HIDPI
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
+        <key>DisplayBlueGamma</key>
+        <real>2</real>
+        <key>DisplayBluePointX</key>
+        <real>0.155</real>
+        <key>DisplayBluePointY</key>
+        <real>0.10000000000000001</real>
+        <key>DisplayGreenGamma</key>
+        <real>2</real>
+        <key>DisplayGreenPointX</key>
+        <real>0.31</real>
+        <key>DisplayGreenPointY</key>
+        <real>0.55000000000000004</real>
+        <key>DisplayRedGamma</key>
+        <real>2</real>
+        <key>DisplayRedPointX</key>
+        <real>0.57999999999999996</real>
+        <key>DisplayRedPointY</key>
+        <real>0.34000000000000002</real>
+        <key>DisplayWhitePointX</key>
+        <real>0.31269839999999999</real>
+        <key>DisplayWhitePointY</key>
+        <real>0.32899479999999998</real>
         <key>DisplayProductID</key>
-            <integer>PID</integer>
+        <integer>PID</integer>
         <key>DisplayVendorID</key>
-            <integer>VID</integer>
+        <integer>VID</integer>
         <key>DisplayProductName</key>
-            <string>Color LCD</string>
+        <string>Color LCD</string>
         <key>IODisplayEDID</key>
-            <data>EDid</data>
+        <data>EDid</data>
         <key>scale-resolutions</key>
             <array>
                 <data>
