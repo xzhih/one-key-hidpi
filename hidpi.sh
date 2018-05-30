@@ -117,8 +117,6 @@ cat > "$dpiFile" <<-\HIDPI
             <integer>PID</integer>
         <key>DisplayVendorID</key>
             <integer>VID</integer>
-        <key>DisplayProductName</key>
-            <string>Color LCD</string>
         <key>IODisplayEDID</key>
             <data>EDid</data>
         <key>scale-resolutions</key>
