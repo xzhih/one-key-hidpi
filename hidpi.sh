@@ -49,7 +49,8 @@ EEF
 function choose_icon()
 {
     #
-    mkdir $thisDir/tmp/
+    rm -rf $thisDir/tmp/
+    mkdir -p $thisDir/tmp/
     curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/Icons.plist -o $thisDir/tmp/Icons.plist
     # curl -fsSL http://127.0.0.1:8080/Icons.plist -o $thisDir/tmp/Icons.plist
 
@@ -65,6 +66,7 @@ cat << EOF
 (5) 保持原样
 
 EOF
+
 read -p "输入你的选择[1~5]: " logo
 case $logo in
     1) Picon=$imacicon
@@ -82,7 +84,9 @@ DICON=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.icns"
 ;;
 5) rm -rf $thisDir/tmp/Icons.plist
 ;;
-*) echo "输入错误，拜拜";
+*) 
+
+echo "输入错误，拜拜";
 exit 0
 ;;
 esac 
@@ -121,21 +125,48 @@ cat > "$dpiFile" <<-\HIDPI
             <data>EDid</data>
         <key>scale-resolutions</key>
             <array>
-                <data>
-                AAAPAAAACHAA
-                </data>
-                <data>
-                AAAMgAAABkAA
-                </data>
-                <data>
-                AAAMgAAABwgA
-                </data>
-                <data>
-                AAALQAAABlQA
-                </data>
-            </array>
+            <!-- 1840x1035 -->
+            <!-- <data>AAAOYAAACBYA</data> -->
+            <!-- <data>AAAOYAAACBYAAAABACAAAA==</data> -->
+            <!-- <data>AAAOYAAACBYAAAAJAKAAAA==</data> -->
+
+            <!-- 1760x990 -->
+            <!-- <data>AAANwAAAB7wA</data> -->
+            <!-- <data>AAANwAAAB7wAAAABACAAAA==</data> -->
+            <!-- <data>AAANwAAAB7wAAAAJAKAAAA==</data> -->
+
+            <!-- 1680x945 -->
+            <data>AAANIAAAB2IA</data>
+            <data>AAANIAAAB2IAAAABACAAAA==</data>
+            <data>AAANIAAAB2IAAAAJAKAAAA==</data>
+
+            <!-- 1440x810 -->
+            <data>AAALQAAABlQA</data>
+            <data>AAALQAAABlQAAAABACAAAA==</data>
+            <data>AAALQAAABlQAAAAJAKAAAA==</data>
+
+            <!-- 1280x720 -->
+            <data>AAAKAAAABaAA</data>
+            <data>AAAKAAAABaAAAAABACAAAA==</data>
+            <data>AAAKAAAABaAAAAAJAKAAAA==</data>
+
+            <!-- 1024x576 -->
+            <data>AAAIAAAABIAA</data>
+            <data>AAAIAAAABIAAAAABACAAAA==</data>
+            <data>AAAIAAAABIAAAAAJAKAAAA==</data>
+
+            <!-- 960x540 -->
+            <data>AAAHgAAABDgA</data>
+            <data>AAAHgAAABDgAAAABACAAAA==</data>
+            <data>AAAHgAAABDgAAAAJAKAAAA==</data>
+
+            <!-- 640x360 -->
+            <data>AAAFAAAAAWgA</data>
+            <data>AAAFAAAAAWgAAAABACAAAA==</data>
+            <data>AAAFAAAAAWgAAAAJAKAAAA==</data>
+        </array>
         <key>target-default-ppmm</key>
-            <real>10.1510574</real>
+            <real>10.0699301</real>
     </dict>
 </plist>
 HIDPI
@@ -151,7 +182,14 @@ function end()
     sudo rm -rf $thisDir/tmp
     echo "开启成功，重启生效"
     echo "首次重启开机logo会变得巨大，之后就不会了"
+    say "妖怪，哪里跑"
 }
+
+#自定义分辨率
+#hi = $(printf '%08x %08x' $((1920*2)) $((1080*2)))
+#encode_hi = $(echo $hi | xxd -r -p | base64)
+
+
 
 # 开
 function enable_hidpi()
@@ -181,6 +219,7 @@ function disable()
     sudo cp -r $thatDir/backup/* $thatDir/
 
     sudo rm -rf $thatDir/backup
+    
     echo "已关闭，重启生效"
 }
 
@@ -195,6 +234,7 @@ cat << EOF
 (3) 关闭HIDPI
 
 EOF
+
 read -p "输入你的选择[1~3]: " input
 case $input in
     1) enable_hidpi
@@ -203,7 +243,9 @@ case $input in
 ;;
 3) disable
 ;;
-*) echo "输入错误，拜拜";
+*) 
+
+echo "输入错误，拜拜";
 exit 0
 ;;
 esac 
