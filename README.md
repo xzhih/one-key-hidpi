@@ -1,38 +1,45 @@
-# 一键开启MacOS HIDPI
+# Enable macOS HiDPI
 
-### 说明
+## Explanation
 
-此脚本的目的是为中低分辨率的屏幕开启 HIDPI 选项，并且具有原生的 HIDPI 设置，不需要 RDM 软件即可在系统显示器设置中设置
+[English](README.md) | [中文](README-zh.md)
 
-MacOS 的 dpi 机制和 win 下不一样，比如 1080p 的屏幕在 win 下有 125%、150% 这样的缩放选项，而同样的屏幕在 MacOS 下，缩放选项里只是单纯的调节分辨率，这就使得在默认分辨率下字体和UI看起来很小，降低分辨率又显得模糊。
+ This script can simulate macOS HiDPI on a non-retina display, and have a "Native" Scaled in System Preferences.
 
-同时，此脚本也可以通过注入修补后的 EDID 修复闪屏，或者睡眠唤醒后的闪屏问题，当然这个修复因人而异
+Some device have wake-up issue, script's second option may help, it inject a patched EDID, but another problem may exists here.
 
-效果：
+Logo scaling up may not be resolved, cuz the higher resolution is faked.
 
-![HIDPI效果.png](https://i.loli.net/2017/10/26/59f199e85deb7.png)
+System Preferences
 
-### 使用方法
+![Preferences](./img/preferences.jpg)
 
-在终端输入以下命令回车即可
+## Usage
+
+Run script in Terminal
 
 ```
 $ sh -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"
 ```
 
-![运行](https://i.loli.net/2018/04/03/5ac2963c7b26b.png)
+![RUN](./img/run.jpg)
 
-### 恢复
+## Recovery
 
-如果使用此脚本后，开机无法进入系统，请到恢复模式中，使用终端删除 `/System/Library/Displays/Contents/Resources/Overrides` 下删除显示器VendorID对应的文件夹，并把backup文件夹中的备份复制出来。
+If you cant boot into system, or get any another issues, you can use clover `-x ` reboot or into Recovery mode, remove your display's DisplayVendorID folder under `/System/Library/Displays/Contents/Resources/Overrides` , and move backup files
 
-具体命令如下：
+In Terminal: 
+
 ```
-$ cd /Volumes/你的系统盘/System/Library/Displays/Contents/Resources/Overrides
+$ cd /Volumes/"Your System Disk Part"/System/Library/Displays/Contents/Resources/Overrides
 $ VendorID=$(ioreg -l | grep "DisplayVendorID" | awk '{print $8}')
 $ Vid=$(echo "obase=16;$VendorID" | bc | tr 'A-Z' 'a-z')
 $ rm -rf ./DisplayVendorID-$Vid
 $ cp -r ./backup/* ./
 ```
 
+## Inspired
 
+https://www.tonymacx86.com/threads/solved-black-screen-with-gtx-1070-lg-ultrafine-5k-sierra-10-12-4.219872/page-4#post-1644805
+
+https://github.com/syscl/Enable-HiDPI-OSX

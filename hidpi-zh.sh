@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# init
+# 初始化
 function init()
 {
 #
@@ -37,7 +37,7 @@ EEF
     lgicon=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.tiff"
 
     if [[ ! -d $thatDir/backup ]]; then
-        echo "Backing up..."
+        echo "正在备份"
         sudo mkdir -p $thatDir/backup
         sudo cp $thatDir/Icons.plist $thatDir/backup/
         if [[ -d $thatDir/DisplayVendorID-$Vid ]]; then
@@ -46,7 +46,7 @@ EEF
     fi
 }
 
-# choose_icon
+# 选择ICON
 function choose_icon()
 {
     #
@@ -57,18 +57,18 @@ function choose_icon()
 
 #
 cat << EOF
-------------------------------------
-|********** Choose Icon ***********|
-------------------------------------
+----------------------------------------
+|********** 选择要显示的ICON ***********|
+----------------------------------------
 (1) iMac
 (2) MacBook
 (3) MacBook Pro
-(4) LG Display
-(5) Remain as it is
+(4) LG 显示器
+(5) 保持原样
 
 EOF
 
-read -p "Enter your choice [1~5]: " logo
+read -p "输入你的选择[1~5]: " logo
 case $logo in
     1) Picon=$imacicon
 RP=("33" "68" "160" "90")
@@ -85,7 +85,9 @@ DICON=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.icns"
 ;;
 5) rm -rf $thisDir/tmp/Icons.plist
 ;;
-*) echo "Enter error, bye";
+*) 
+
+echo "输入错误，拜拜";
 exit 0
 ;;
 esac 
@@ -103,7 +105,7 @@ fi
 
 }
 
-# mian
+# 主函数
 function main()
 {
     sudo mkdir -p $thisDir/tmp/DisplayVendorID-$Vid
@@ -127,16 +129,16 @@ cat > "$dpiFile" <<-\CCC
 CCC
 
 cat << EOF
-------------------------------------------
-|********** resolution config ***********|
-------------------------------------------
-(1) 1080P Display
-(2) 2K Display
-(3) Manual input resolution
+--------------------------------------
+|********** 选择分辨率配置 ***********|
+--------------------------------------
+(1) 1080P 显示屏
+(2) 2K 显示屏
+(3) 手动输入分辨率
 
 EOF
 
-read -p "Enter your choice: " res
+read -p "选择你想要的配置: " res
 case $res in
     1 ) create_res 1680x945 1600x900 1440x810;;
 2 ) create_res 2048x1152 1920x1080 1840x1035 1760x990;;
@@ -157,25 +159,25 @@ FFF
     sed -i '' "s/PID/$ProductID/g" $dpiFile
 }
 
-# end
+# 擦屁股
 function end()
 {
     sudo cp -r $thisDir/tmp/* $thatDir/
     sudo rm -rf $thisDir/tmp
-    echo "Enabled, please reboot."
-    echo "Rebooting the logo for the first time will become huge, then it will not be."
-    say "Good"
+    echo "开启成功，重启生效"
+    echo "首次重启开机logo会变得巨大，之后就不会了"
+    say "妖怪，哪里跑"
 }
 
-# custom resolution
+#自定义分辨率
 function custom_res()
 {
-    echo "Enter the HIDPI resolution, separated by a space，like this: 1680x945 1600x900 1440x810"
+    echo "输入想要开启的 HIDPI 分辨率，用空格隔开，就像这样：1680x945 1600x900 1440x810"
     read -p ":" res
     create_res $res
 }
 
-# create resolution
+# 创建分辨率配置
 function create_res()
 {
     for res in $@; do
@@ -194,7 +196,7 @@ OOO
 done
 }
 
-# enable
+# 开
 function enable_hidpi()
 {
     choose_icon
@@ -204,7 +206,7 @@ function enable_hidpi()
     end
 }
 
-# patch
+# 开挂
 function enable_hidpi_with_patch()
 {
     choose_icon
@@ -213,14 +215,14 @@ function enable_hidpi_with_patch()
     end
 }
 
-# disable
+# 关
 function disable()
 {
     sudo rm -rf $thatDir/DisplayVendorID-$Vid 
     sudo rm -rf $thatDir/Icons.plist
     sudo cp -r $thatDir/backup/* $thatDir/
     sudo rm -rf $thatDir/backup
-    echo "Disabled, restart takes effect"
+    echo "已关闭，重启生效"
 }
 
 function start()
@@ -229,13 +231,13 @@ function start()
 # 
 cat << EOF
 
-(1) Enable HIDPI
-(2) Enable HIDPI (with patch)
-(3) Disable HIDPI
+(1) 开启HIDPI
+(2) 开启HIDPI（同时注入花屏补丁）
+(3) 关闭HIDPI
 
 EOF
 
-read -p "Enter your choice [1~3]: " input
+read -p "输入你的选择[1~3]: " input
 case $input in
     1) enable_hidpi
 ;;
@@ -244,7 +246,8 @@ case $input in
 3) disable
 ;;
 *) 
-echo "Enter error, bye";
+
+echo "输入错误，拜拜";
 exit 0
 ;;
 esac 
