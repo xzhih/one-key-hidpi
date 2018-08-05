@@ -140,12 +140,19 @@ EOF
 
 read -p "选择你想要的配置: " res
 case $res in
-    1 ) create_res 1680x945 1600x900 1440x810;;
-2 ) create_res 2048x1152 1920x1080 1840x1035 1760x990;;
+    1 ) create_res_1 1920x1080 1680x945 1440x810 1280x720 1024x576
+;;
+2 ) create_res_1 2048x1152 1920x1080 1680x945 1440x810 1280x720
+    create_res_2 1024x576
+    create_res_3 960x540
+    create_res_4 2048x1152 
+;;
 3 ) custom_res;;
 esac
 
-create_res 1280x720 1024x576 960x540 640x360
+create_res_2 1280x720 960x540 640x360
+create_res_3 840x472 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+create_res_4 1920x1080 1680x945 1440x810 1280x720 1024x576 960x540 640x360
 
 cat >> "$dpiFile" <<-\FFF
             </array>
@@ -186,13 +193,61 @@ function create_res()
     hidpi=$(printf '%08x %08x' $(($width*2)) $(($height*2)) | xxd -r -p | base64)
 #
 cat << OOO >> $dpiFile
-                <!-- $res -->
-                <data>${hidpi:0:11}A</data>
+                <data>${hidpi:0:11}AAAAB</data>
                 <data>${hidpi:0:11}AAAABACAAAA==</data>
-                <data>${hidpi:0:11}AAAAJAKAAAA==</data>
-
 OOO
+done
+}
 
+function create_res_1()
+{
+    for res in $@; do
+    width=$(echo $res | cut -d x -f 1)
+    height=$(echo $res | cut -d x -f 2)
+    hidpi=$(printf '%08x %08x' $(($width*2)) $(($height*2)) | xxd -r -p | base64)
+#
+cat << OOO >> $dpiFile
+                <data>${hidpi:0:11}A</data>
+OOO
+done
+}
+
+function create_res_2()
+{
+    for res in $@; do
+    width=$(echo $res | cut -d x -f 1)
+    height=$(echo $res | cut -d x -f 2)
+    hidpi=$(printf '%08x %08x' $(($width*2)) $(($height*2)) | xxd -r -p | base64)
+#
+cat << OOO >> $dpiFile
+                <data>${hidpi:0:11}AAAABACAAAA==</data>
+OOO
+done
+}
+
+function create_res_3()
+{
+    for res in $@; do
+    width=$(echo $res | cut -d x -f 1)
+    height=$(echo $res | cut -d x -f 2)
+    hidpi=$(printf '%08x %08x' $(($width*2)) $(($height*2)) | xxd -r -p | base64)
+#
+cat << OOO >> $dpiFile
+                <data>${hidpi:0:11}AAAAB</data>
+OOO
+done
+}
+
+function create_res_4()
+{
+    for res in $@; do
+    width=$(echo $res | cut -d x -f 1)
+    height=$(echo $res | cut -d x -f 2)
+    hidpi=$(printf '%08x %08x' $(($width*2)) $(($height*2)) | xxd -r -p | base64)
+#
+cat << OOO >> $dpiFile
+                <data>${hidpi:0:11}AAAAJAKAAAA==</data>
+OOO
 done
 }
 
