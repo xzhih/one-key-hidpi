@@ -103,7 +103,7 @@ fi
 
 }
 
-# mian
+# main
 function main()
 {
     sudo mkdir -p $thisDir/tmp/DisplayVendorID-$Vid
