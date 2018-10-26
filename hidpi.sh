@@ -1,5 +1,11 @@
 #!/bin/sh
-# 
+#
+
+function sedi()
+{
+    sed --version >/dev/null 2>&1 && sed -i "$@" || sed -i "" "$@"
+}
+
 # init
 function init()
 {
@@ -91,14 +97,14 @@ exit 0
 esac 
 
 if [[ $Picon ]]; then
-    sed -i '' "s/VID/$Vid/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/PID/$Pid/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPX/${RP[0]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPY/${RP[1]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPW/${RP[2]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPH/${RP[3]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/PICON/$Picon/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/DICON/$DICON/g" $thisDir/tmp/Icons.plist
+    sedi "s/VID/$Vid/g" $thisDir/tmp/Icons.plist
+    sedi "s/PID/$Pid/g" $thisDir/tmp/Icons.plist
+    sedi "s/RPX/${RP[0]}/g" $thisDir/tmp/Icons.plist
+    sedi "s/RPY/${RP[1]}/g" $thisDir/tmp/Icons.plist
+    sedi "s/RPW/${RP[2]}/g" $thisDir/tmp/Icons.plist
+    sedi "s/RPH/${RP[3]}/g" $thisDir/tmp/Icons.plist
+    sedi "s/PICON/$Picon/g" $thisDir/tmp/Icons.plist
+    sedi "s/DICON/$DICON/g" $thisDir/tmp/Icons.plist
 fi
 
 }
@@ -160,8 +166,8 @@ cat >> "$dpiFile" <<-\FFF
 </plist>
 FFF
 
-    sed -i '' "s/VID/$VendorID/g" $dpiFile
-    sed -i '' "s/PID/$ProductID/g" $dpiFile
+    sedi "s/VID/$VendorID/g" $dpiFile
+    sedi "s/PID/$ProductID/g" $dpiFile
 }
 
 # end
@@ -254,8 +260,8 @@ function enable_hidpi()
 {
     choose_icon
     main
-    sed -i "" "/.*IODisplayEDID/d" $dpiFile
-    sed -i "" "/.*EDid/d" $dpiFile
+    sedi "/.*IODisplayEDID/d" $dpiFile
+    sedi "/.*EDid/d" $dpiFile
     end
 }
 
@@ -264,7 +270,7 @@ function enable_hidpi_with_patch()
 {
     choose_icon
     main
-    sed -i '' "s:EDid:${EDid}:g" $dpiFile
+    sedi "s:EDid:${EDid}:g" $dpiFile
     end
 }
 
