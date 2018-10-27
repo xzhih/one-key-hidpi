@@ -14,6 +14,14 @@ cat << EEF
  |_|  |_| |_____| |_____/  |_|      |_____|
                                            
 ============================================
+
+Note: I don't have an external monitor to 
+test the script.If you have multiple monitors,
+please run the script on a single monitor, 
+or cover the notebook when it is connected to the monitor.
+
+============================================
+
 EEF
     #
     VendorID=$(ioreg -l | grep "DisplayVendorID" | awk '{print $NF}')
@@ -91,14 +99,14 @@ exit 0
 esac 
 
 if [[ $Picon ]]; then
-    sed -i '' "s/VID/$Vid/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/PID/$Pid/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPX/${RP[0]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPY/${RP[1]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPW/${RP[2]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPH/${RP[3]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/PICON/$Picon/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/DICON/$DICON/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/VID/$Vid/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/PID/$Pid/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/PICON/$Picon/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/DICON/$DICON/g" $thisDir/tmp/Icons.plist
 fi
 
 }
@@ -160,8 +168,8 @@ cat >> "$dpiFile" <<-\FFF
 </plist>
 FFF
 
-    sed -i '' "s/VID/$VendorID/g" $dpiFile
-    sed -i '' "s/PID/$ProductID/g" $dpiFile
+    /usr/bin/sed -i "" "s/VID/$VendorID/g" $dpiFile
+    /usr/bin/sed -i "" "s/PID/$ProductID/g" $dpiFile
 }
 
 # end
@@ -264,7 +272,7 @@ function enable_hidpi_with_patch()
 {
     choose_icon
     main
-    sed -i '' "s:EDid:${EDid}:g" $dpiFile
+    /usr/bin/sed -i "" "s:EDid:${EDid}:g" $dpiFile
     end
 }
 

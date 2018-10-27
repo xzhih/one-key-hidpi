@@ -14,6 +14,11 @@ cat << EEF
  |_|  |_| |_____| |_____/  |_|      |_____|
                                            
 ============================================
+
+注：由于我手头没有外置显示器做测试，如果你有多个显示器，
+请在单显示器运行脚本，笔记本外接显示器时请盒盖
+
+============================================
 EEF
     #
     VendorID=$(ioreg -l | grep "DisplayVendorID" | awk '{print $NF}')
@@ -24,7 +29,7 @@ EEF
     Pid=$(echo "obase=16;$ProductID" | bc | tr 'A-Z' 'a-z')
 
     edID=$(echo $EDID | sed 's/../b5/21')
-    EDid=$(echo $edID | xxd -r -p | base64)
+    EDid=$(printf $edID | xxd -r -p | base64)
 
     thisDir=$(dirname $0)
     thatDir="/System/Library/Displays/Contents/Resources/Overrides"
@@ -93,14 +98,14 @@ exit 0
 esac 
 
 if [[ $Picon ]]; then
-    sed -i '' "s/VID/$Vid/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/PID/$Pid/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPX/${RP[0]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPY/${RP[1]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPW/${RP[2]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/RPH/${RP[3]}/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/PICON/$Picon/g" $thisDir/tmp/Icons.plist
-    sed -i '' "s/DICON/$DICON/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/VID/$Vid/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/PID/$Pid/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/PICON/$Picon/g" $thisDir/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/DICON/$DICON/g" $thisDir/tmp/Icons.plist
 fi
 
 }
@@ -162,8 +167,8 @@ cat >> "$dpiFile" <<-\FFF
 </plist>
 FFF
 
-    sed -i '' "s/VID/$VendorID/g" $dpiFile
-    sed -i '' "s/PID/$ProductID/g" $dpiFile
+    /usr/bin/sed -i "" "s/VID/$VendorID/g" $dpiFile
+    /usr/bin/sed -i "" "s/PID/$ProductID/g" $dpiFile
 }
 
 # 擦屁股
@@ -173,7 +178,7 @@ function end()
     sudo rm -rf $thisDir/tmp
     echo "开启成功，重启生效"
     echo "首次重启开机logo会变得巨大，之后就不会了"
-    say "妖怪，哪里跑"
+    # say "妖怪，哪里跑"
 }
 
 #自定义分辨率
@@ -266,7 +271,7 @@ function enable_hidpi_with_patch()
 {
     choose_icon
     main
-    sed -i '' "s:EDid:${EDid}:g" $dpiFile
+    /usr/bin/sed -i "" "s:EDid:${EDid}:g" $dpiFile
     end
 }
 
