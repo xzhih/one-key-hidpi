@@ -1,4 +1,118 @@
 #!/bin/sh
+#
+# Output styling.
+#
+BOLD="\033[1m"
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+BLUE="\033[1;34m"
+OFF="\033[m"
+STYLE_UNDERLINED="\e[4m"
+# 
+function _toLowerCase()
+{
+    echo "`echo $1 | tr '[:upper:]' '[:lower:]'`"
+}
+#
+function get_edid()
+{
+    local index=0
+    local selection=0
+
+    gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
+
+    if [[ "${#gDisplayInf[@]}" -ge 2 ]];
+      then
+        #
+        # Multi monitors detected. Choose target monitor.
+        #
+        echo '         Table of monitors          '
+        echo '------------------------------------'
+        echo '  Index  |  VendorID  |  ProductID  '
+        echo '------------------------------------'
+        for display in "${gDisplayInf[@]}"
+        do
+          let index++
+          #
+          # Show monitors.
+          #
+          printf "    %d    |    ${display:16:4}    |    ${display:20:4}\n" $index
+        done
+        #
+        # Close the table
+        #
+        echo '------------------------------------'
+        #
+        # Let user make a selection.
+        #
+        printf 'Choose the display to enable HiDPI'
+        if [[ "${#gDisplayInf[@]}" == 2 ]]; then
+            printf "[$RED${STYLE_UNDERLINED}E${OFF}xit/1/2]"
+        else
+            printf "[$RED${STYLE_UNDERLINED}E${OFF}xit/1-${index}]"
+        fi
+        read -p ": " selection
+        case "$(_toLowerCase $selection)" in
+        e|exit       ) echo "Abort."
+                       exit -0
+                       ;;
+
+        [[:digit:]]* ) #
+                       # Lower selection (arrays start at zero).
+                       #
+                       if ((selection < 1 || selection > index)); then
+                            echo "Enter error, bye";
+                            exit 0
+                       fi
+                       let selection-=1
+                       gMonitor=${gDisplayInf[$selection]}
+                       ;;
+
+        *            )  if [[ "${#gDisplayInf[@]}" == 2  ]]; then
+                            echo 'Invalid menu action, enter 1 or 2'
+                        else
+                            echo "Invalid menu action, enter valid number among 1, ..., ${index}"
+                        fi
+                       ;;
+        esac
+      else
+        gMonitor=${gDisplayInf}
+    fi
+    #
+    #
+    if [[ ${gMonitor:16:1} == 0 ]]; then
+        # get rid of the prefix 0
+        gDisplayVendorID_RAW=${gMonitor:17:3}
+    else
+        gDisplayVendorID_RAW=${gMonitor:16:4}
+    fi
+    # convert from hex to dec
+    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
+    gDisplayProductID_RAW=${gMonitor:20:4}
+    #
+    # Exchange two bytes
+    #
+    # Fix an issue that will cause wrong name of DisplayProductID
+    #
+    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
+        # get rid of the prefix 0
+        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
+    else
+        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
+    fi
+    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
+    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
+    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
+
+
+    EDID=$gMonitor
+    VendorID=$gDisplayVendorID
+    ProductID=$gDisplayProductID  
+    # echo $VendorID
+    # echo $ProductID
+    # echo $EDID
+}
+#
 # 
 # init
 function init()
@@ -15,18 +129,10 @@ cat << EEF
                                            
 ============================================
 
-Note: I don't have an external monitor to 
-test the script.If you have multiple monitors,
-please run the script on a single monitor, 
-or cover the notebook when it is connected to the monitor.
-
-============================================
 
 EEF
     #
-    VendorID=$(ioreg -l | grep "DisplayVendorID" | awk '{print $NF}')
-    ProductID=$(ioreg -l | grep "DisplayProductID" | awk '{print $NF}')
-    EDID=$(ioreg -l | grep "IODisplayEDID" | awk '{print $NF}' | sed -e 's/.$//' -e 's/^.//')
+    get_edid
 
     Vid=$(echo "obase=16;$VendorID" | bc | tr 'A-Z' 'a-z')
     Pid=$(echo "obase=16;$ProductID" | bc | tr 'A-Z' 'a-z')
@@ -79,23 +185,23 @@ EOF
 read -p "Enter your choice [1~5]: " logo
 case $logo in
     1) Picon=$imacicon
-RP=("33" "68" "160" "90")
-;;
-2) Picon=$mbicon
-RP=("52" "66" "122" "76")
-;;
-3) Picon=$mbpicon
-RP=("40" "62" "147" "92")
-;;
-4) Picon=$lgicon
-RP=("11" "47" "202" "114")
-DICON=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.icns"
-;;
-5) rm -rf $thisDir/tmp/Icons.plist
-;;
-*) echo "Enter error, bye";
-exit 0
-;;
+    RP=("33" "68" "160" "90")
+    ;;
+    2) Picon=$mbicon
+    RP=("52" "66" "122" "76")
+    ;;
+    3) Picon=$mbpicon
+    RP=("40" "62" "147" "92")
+    ;;
+    4) Picon=$lgicon
+    RP=("11" "47" "202" "114")
+    DICON=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.icns"
+    ;;
+    5) rm -rf $thisDir/tmp/Icons.plist
+    ;;
+    *) echo "Enter error, bye";
+    exit 0
+    ;;
 esac 
 
 if [[ $Picon ]]; then
@@ -147,14 +253,14 @@ EOF
 read -p "Enter your choice: " res
 case $res in
     1 ) create_res_1 1920x1080 1680x945 1440x810 1280x720 1024x576
-;;
-2 ) create_res_1 2048x1152 1920x1080 1680x945 1440x810 1280x720
-    create_res_2 1024x576
-    create_res_3 960x540
-    create_res_4 2048x1152 
-;;
-3 ) custom_res;;
-esac
+    ;;
+    2 ) create_res_1 2048x1152 1920x1080 1680x945 1440x810 1280x720
+        create_res_2 1024x576
+        create_res_3 960x540
+        create_res_4 2048x1152 
+    ;;
+    3 ) custom_res;;
+    esac
 
 create_res_2 1280x720 960x540 640x360
 create_res_3 840x472 720x405 640x360 576x324 512x288 420x234 400x225 320x180
@@ -301,16 +407,16 @@ EOF
 read -p "Enter your choice [1~3]: " input
 case $input in
     1) enable_hidpi
-;;
-2) enable_hidpi_with_patch
-;;
-3) disable
-;;
-*) 
-echo "Enter error, bye";
-exit 0
-;;
-esac 
-}
+    ;;
+    2) enable_hidpi_with_patch
+    ;;
+    3) disable
+    ;;
+    *) 
+    echo "Enter error, bye";
+    exit 0
+    ;;
+    esac 
+    }
 
 start
