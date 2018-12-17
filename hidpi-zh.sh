@@ -1,5 +1,119 @@
 #!/bin/sh
+#
+# Output styling.
+#
+BOLD="\033[1m"
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+BLUE="\033[1;34m"
+OFF="\033[m"
+STYLE_UNDERLINED="\e[4m"
 # 
+function _toLowerCase()
+{
+    echo "`echo $1 | tr '[:upper:]' '[:lower:]'`"
+}
+#
+function get_edid()
+{
+    local index=0
+    local selection=0
+
+    gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
+
+    if [[ "${#gDisplayInf[@]}" -ge 2 ]];
+      then
+        #
+        # Multi monitors detected. Choose target monitor.
+        #
+        echo '              显示器列表             '
+        echo '------------------------------------'
+        echo '   序号  |  VendorID  |  ProductID  '
+        echo '------------------------------------'
+        for display in "${gDisplayInf[@]}"
+        do
+          let index++
+          #
+          # Show monitors.
+          #
+          printf "    %d    |    ${display:16:4}    |    ${display:20:4}\n" $index
+        done
+        #
+        # Close the table
+        #
+        echo '------------------------------------'
+        #
+        # Let user make a selection.
+        #
+        printf '请选择需要开启HiDPI的显示器序号'
+        if [[ "${#gDisplayInf[@]}" == 2 ]]; then
+            printf "[$RED${STYLE_UNDERLINED}E${OFF}xit/1/2]"
+        else
+            printf "[$RED${STYLE_UNDERLINED}E${OFF}xit/1-${index}]"
+        fi
+        read -p ": " selection
+        case "$(_toLowerCase $selection)" in
+        e|exit       ) echo "Abort."
+                       exit -0
+                       ;;
+
+        [[:digit:]]* ) #
+                       # Lower selection (arrays start at zero).
+                       #
+                       if ((selection < 1 || selection > index)); then
+                            echo "Enter error, bye";
+                            exit 0
+                       fi
+                       let selection-=1
+                       gMonitor=${gDisplayInf[$selection]}
+                       ;;
+
+        *            )  if [[ "${#gDisplayInf[@]}" == 2  ]]; then
+                            echo 'Invalid menu action, enter 1 or 2'
+                        else
+                            echo "Invalid menu action, enter valid number among 1, ..., ${index}"
+                        fi
+                       ;;
+        esac
+      else
+        gMonitor=${gDisplayInf}
+    fi
+    #
+    #
+    if [[ ${gMonitor:16:1} == 0 ]]; then
+        # get rid of the prefix 0
+        gDisplayVendorID_RAW=${gMonitor:17:3}
+    else
+        gDisplayVendorID_RAW=${gMonitor:16:4}
+    fi
+    # convert from hex to dec
+    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
+    gDisplayProductID_RAW=${gMonitor:20:4}
+    #
+    # Exchange two bytes
+    #
+    # Fix an issue that will cause wrong name of DisplayProductID
+    #
+    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
+        # get rid of the prefix 0
+        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
+    else
+        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
+    fi
+    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
+    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
+    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
+
+
+    EDID=$gMonitor
+    VendorID=$gDisplayVendorID
+    ProductID=$gDisplayProductID  
+    # echo $VendorID
+    # echo $ProductID
+    # echo $EDID
+}
+#
+#
 # 初始化
 function init()
 {
@@ -15,15 +129,10 @@ cat << EEF
                                            
 ============================================
 
-注：由于我手头没有外置显示器做测试，如果你有多个显示器，
-请在单显示器运行脚本，笔记本外接显示器时请盒盖
 
-============================================
 EEF
     #
-    VendorID=$(ioreg -l | grep "DisplayVendorID" | awk '{print $NF}')
-    ProductID=$(ioreg -l | grep "DisplayProductID" | awk '{print $NF}')
-    EDID=$(ioreg -l | grep "IODisplayEDID" | awk '{print $NF}' | sed -e 's/.$//' -e 's/^.//')
+    get_edid
 
     Vid=$(echo "obase=16;$VendorID" | bc | tr 'A-Z' 'a-z')
     Pid=$(echo "obase=16;$ProductID" | bc | tr 'A-Z' 'a-z')
