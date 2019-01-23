@@ -1,19 +1,5 @@
 #!/bin/sh
-#
-# Output styling.
-#
-BOLD="\033[1m"
-RED="\033[1;31m"
-GREEN="\033[1;32m"
-BLUE="\033[1;34m"
-OFF="\033[m"
-STYLE_UNDERLINED="\e[4m"
-# 
-function _toLowerCase()
-{
-    echo "`echo $1 | tr '[:upper:]' '[:lower:]'`"
-}
-#
+
 function get_edid()
 {
     local index=0
@@ -21,79 +7,61 @@ function get_edid()
 
     gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
 
-    if [[ "${#gDisplayInf[@]}" -ge 2 ]];
-      then
-        #
+    if [[ "${#gDisplayInf[@]}" -ge 2 ]]; then
+
         # Multi monitors detected. Choose target monitor.
-        #
+        echo ''
         echo '              显示器列表             '
         echo '------------------------------------'
         echo '   序号  |  VendorID  |  ProductID  '
         echo '------------------------------------'
+
+        # Show monitors.
         for display in "${gDisplayInf[@]}"
         do
-          let index++
-          #
-          # Show monitors.
-          #
-          printf "    %d    |    ${display:16:4}    |    ${display:20:4}\n" $index
+            let index++
+            printf "    %d    |    ${display:16:4}    |    ${display:20:4}\n" $index
         done
-        #
-        # Close the table
-        #
+
         echo '------------------------------------'
-        #
+
         # Let user make a selection.
-        #
-        printf '请选择需要开启HiDPI的显示器序号'
-        if [[ "${#gDisplayInf[@]}" == 2 ]]; then
-            printf "[$RED${STYLE_UNDERLINED}E${OFF}xit/1/2]"
-        else
-            printf "[$RED${STYLE_UNDERLINED}E${OFF}xit/1-${index}]"
-        fi
-        read -p ": " selection
-        case "$(_toLowerCase $selection)" in
-        e|exit       ) echo "Abort."
-                       exit -0
-                       ;;
 
-        [[:digit:]]* ) #
-                       # Lower selection (arrays start at zero).
-                       #
-                       if ((selection < 1 || selection > index)); then
-                            echo "Enter error, bye";
-                            exit 0
-                       fi
-                       let selection-=1
-                       gMonitor=${gDisplayInf[$selection]}
-                       ;;
+        read -p "选择显示器序号: " selection
+        case $selection in
+            [[:digit:]]* ) 
+                # Lower selection (arrays start at zero).
+                if ((selection < 1 || selection > index)); then
+                    echo "输入错误，拜拜";
+                    exit 0
+                fi
+                let selection-=1
+                gMonitor=${gDisplayInf[$selection]}
+                ;;
 
-        *            )  if [[ "${#gDisplayInf[@]}" == 2  ]]; then
-                            echo 'Invalid menu action, enter 1 or 2'
-                        else
-                            echo "Invalid menu action, enter valid number among 1, ..., ${index}"
-                        fi
-                       ;;
+            * ) 
+                echo "输入错误，拜拜";
+                exit 0
+                ;;
         esac
-      else
+    else
         gMonitor=${gDisplayInf}
     fi
-    #
-    #
+    
     if [[ ${gMonitor:16:1} == 0 ]]; then
         # get rid of the prefix 0
         gDisplayVendorID_RAW=${gMonitor:17:3}
     else
         gDisplayVendorID_RAW=${gMonitor:16:4}
     fi
+
     # convert from hex to dec
     gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
     gDisplayProductID_RAW=${gMonitor:20:4}
-    #
+    
     # Exchange two bytes
-    #
     # Fix an issue that will cause wrong name of DisplayProductID
-    #
+    
     if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
         # get rid of the prefix 0
         gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
@@ -104,22 +72,21 @@ function get_edid()
     gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
     gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
 
-
     EDID=$gMonitor
     VendorID=$gDisplayVendorID
-    ProductID=$gDisplayProductID  
-    # echo $VendorID
-    # echo $ProductID
+    ProductID=$gDisplayProductID 
+    Vid=$gDisplayVendorID_RAW
+    Pid=$gDisplayProductID_reverse 
+    # echo $Vid
+    # echo $Pid
     # echo $EDID
 }
-#
-#
+
 # 初始化
 function init()
 {
 #
 cat << EEF
-
   _    _   _____   _____    _____    _____ 
  | |  | | |_   _| |  __ \  |  __ \  |_   _|
  | |__| |   | |   | |  | | | |__) |   | |  
@@ -128,15 +95,10 @@ cat << EEF
  |_|  |_| |_____| |_____/  |_|      |_____|
                                            
 ============================================
-
-
 EEF
     #
     get_edid
-
-    Vid=$(echo "obase=16;$VendorID" | bc | tr 'A-Z' 'a-z')
-    Pid=$(echo "obase=16;$ProductID" | bc | tr 'A-Z' 'a-z')
-
+    
     edID=$(echo $EDID | sed 's/../b5/21')
     EDid=$(printf $edID | xxd -r -p | base64)
 
@@ -150,14 +112,111 @@ EEF
     mbicon=${Overrides}"DisplayVendorID-610\/DisplayProductID-a028-9d9da0.tiff"
     lgicon=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.tiff"
 
-    if [[ ! -d $thatDir/backup ]]; then
+    if [[ ! -f $thatDir/HIDPI/disable ]]; then
         echo "正在备份"
-        sudo mkdir -p $thatDir/backup
-        sudo cp $thatDir/Icons.plist $thatDir/backup/
+        sudo mkdir -p $thatDir/HIDPI/backup
+        sudo cp $thatDir/Icons.plist $thatDir/HIDPI/backup/
         if [[ -d $thatDir/DisplayVendorID-$Vid ]]; then
-            sudo cp -r $thatDir/DisplayVendorID-$Vid $thatDir/backup/
+            sudo cp -r $thatDir/DisplayVendorID-$Vid $thatDir/HIDPI/backup/
         fi
     fi
+    
+    if [[ ! -f $thatDir/HIDPI/disable ]]; then
+        generate_restore_cmd
+    fi
+}
+
+#
+function generate_restore_cmd()
+{
+#
+rm -rf $thisDir/tmp/
+mkdir -p $thisDir/tmp/
+cat > "$thisDir/tmp/disable" <<-\CCC
+function get_edid()
+{
+    local index=0
+    local selection=0
+
+    gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
+
+    if [[ "${#gDisplayInf[@]}" -ge 2 ]]; then
+
+        echo '              Monitors              '
+        echo '------------------------------------'
+        echo '  Index  |  VendorID  |  ProductID  '
+        echo '------------------------------------'
+
+        for display in "${gDisplayInf[@]}"
+        do
+            let index++
+            printf "    %d    |    ${display:16:4}    |    ${display:20:4}\n" $index
+        done
+
+        echo '------------------------------------'
+
+        read -p "Choose the display: " selection
+        case $selection in
+            [[:digit:]]* ) 
+                if ((selection < 1 || selection > index)); then
+                    echo "Enter error, bye";
+                    exit 0
+                fi
+                let selection-=1
+                gMonitor=${gDisplayInf[$selection]}
+                ;;
+
+            * ) 
+                echo "Enter error, bye";
+                exit 0
+                ;;
+        esac
+    else
+        gMonitor=${gDisplayInf}
+    fi
+    
+    if [[ ${gMonitor:16:1} == 0 ]]; then
+        gDisplayVendorID_RAW=${gMonitor:17:3}
+    else
+        gDisplayVendorID_RAW=${gMonitor:16:4}
+    fi
+
+    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
+    gDisplayProductID_RAW=${gMonitor:20:4}
+
+    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
+        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
+    else
+        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
+    fi
+
+    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
+    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
+    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
+
+    EDID=$gMonitor
+    Vid=$gDisplayVendorID_RAW
+    Pid=$gDisplayProductID_reverse 
+    # echo $Vid
+    # echo $Pid
+    # echo $EDID
+}
+
+get_edid
+
+if [[ -d ../DisplayVendorID-$Vid ]]; then
+    rm -rf ../DisplayVendorID-$Vid 
+fi
+
+rm -rf ../Icons.plist
+cp -r ./backup/* ../
+rm -rf ./disable
+echo "HIDPI Disabled"
+CCC
+
+sudo mv $thisDir/tmp/disable $thatDir/HIDPI/
+sudo chmod +x $thatDir/HIDPI/disable
+
 }
 
 # 选择ICON
@@ -185,25 +244,25 @@ EOF
 read -p "输入你的选择[1~5]: " logo
 case $logo in
     1) Picon=$imacicon
-RP=("33" "68" "160" "90")
-;;
-2) Picon=$mbicon
-RP=("52" "66" "122" "76")
-;;
-3) Picon=$mbpicon
-RP=("40" "62" "147" "92")
-;;
-4) Picon=$lgicon
-RP=("11" "47" "202" "114")
-DICON=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.icns"
-;;
-5) rm -rf $thisDir/tmp/Icons.plist
-;;
-*) 
-
-echo "输入错误，拜拜";
-exit 0
-;;
+        RP=("33" "68" "160" "90")
+        ;;
+    2) Picon=$mbicon
+        RP=("52" "66" "122" "76")
+        ;;
+    3) Picon=$mbpicon
+        RP=("40" "62" "147" "92")
+        ;;
+    4) Picon=$lgicon
+        RP=("11" "47" "202" "114")
+        DICON=${Overrides}"DisplayVendorID-1e6d\/DisplayProductID-5b11.icns"
+        ;;
+    5) rm -rf $thisDir/tmp/Icons.plist
+        ;;
+    *)
+    
+    echo "输入错误，拜拜";
+    exit 0
+    ;;
 esac 
 
 if [[ $Picon ]]; then
@@ -254,19 +313,19 @@ EOF
 
 read -p "选择你想要的配置: " res
 case $res in
-    1 ) create_res_1 1920x1080 1680x945 1440x810 1280x720 1024x576
-;;
-2 ) create_res_1 2048x1152 1920x1080 1680x945 1440x810 1280x720
+    1 ) create_res_1 1680x944 1600x900 1440x810 1280x720 1024x576
+    ;;
+    2 ) create_res_1 2048x1152 1920x1080 1680x944 1440x810 1280x720
     create_res_2 1024x576
     create_res_3 960x540
-    create_res_4 2048x1152 
-;;
-3 ) custom_res;;
+    create_res_4 2048x1152 1920x1080
+    ;;
+    3 ) custom_res;;
 esac
 
-create_res_2 1280x720 960x540 640x360
-create_res_3 840x472 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-create_res_4 1920x1080 1680x945 1440x810 1280x720 1024x576 960x540 640x360
+create_res_2 1280x800 1280x720 960x600 960x540 640x360
+create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+create_res_4 1680x944 1600x900 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
 
 cat >> "$dpiFile" <<-\FFF
             </array>
@@ -287,7 +346,6 @@ function end()
     sudo rm -rf $thisDir/tmp
     echo "开启成功，重启生效"
     echo "首次重启开机logo会变得巨大，之后就不会了"
-    # say "妖怪，哪里跑"
 }
 
 #自定义分辨率
@@ -387,13 +445,17 @@ function enable_hidpi_with_patch()
 # 关
 function disable()
 {
-    sudo rm -rf $thatDir/DisplayVendorID-$Vid 
+    if [[ -d $thatDir/DisplayVendorID-$Vid ]]; then
+        sudo rm -rf $thatDir/DisplayVendorID-$Vid 
+    fi
+
     sudo rm -rf $thatDir/Icons.plist
-    sudo cp -r $thatDir/backup/* $thatDir/
-    sudo rm -rf $thatDir/backup
+    sudo cp -r $thatDir/HIDPI/backup/* $thatDir/
+    sudo rm -rf $thatDir/HIDPI/disable
     echo "已关闭，重启生效"
 }
 
+#
 function start()
 {
     init
@@ -409,16 +471,16 @@ EOF
 read -p "输入你的选择[1~3]: " input
 case $input in
     1) enable_hidpi
-;;
-2) enable_hidpi_with_patch
-;;
-3) disable
-;;
-*) 
-
-echo "输入错误，拜拜";
-exit 0
-;;
+    ;;
+    2) enable_hidpi_with_patch
+    ;;
+    3) disable
+    ;;
+    *) 
+    
+    echo "输入错误，拜拜";
+    exit 0
+    ;;
 esac 
 }
 
