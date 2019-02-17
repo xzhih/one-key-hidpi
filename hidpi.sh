@@ -468,7 +468,7 @@ function start()
 cat << EOF
 
 (1) Enable HIDPI
-(2) Enable HIDPI (with patch)
+(2) Enable HIDPI (with EDID)
 (3) Disable HIDPI
 
 EOF

@@ -468,7 +468,7 @@ function start()
 cat << EOF
 
 (1) 开启HIDPI
-(2) 开启HIDPI（同时注入花屏补丁）
+(2) 开启HIDPI（同时注入EDID）
 (3) 关闭HIDPI
 
 EOF
