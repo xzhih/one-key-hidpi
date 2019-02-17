@@ -16,9 +16,7 @@ macOS 的 DPI 机制和 Windows 下不一样，比如 1080p 的屏幕在 Windows
 
 ![设置](./img/preferences.jpg)
 
-<video width="100%" controls autoplay loop>
-  <source src="./img/hidpi.mp4" type="video/mp4">
-</video>
+![设置](./img/hidpi.gif)
 
 ## 使用方法
 

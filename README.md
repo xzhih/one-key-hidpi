@@ -14,9 +14,7 @@ System Preferences
 
 ![Preferences](./img/preferences.jpg)
 
-<video width="100%" controls autoplay loop>
-  <source src="./img/hidpi.mp4" type="video/mp4">
-</video>
+![Preferences](./img/hidpi.gif)
 
 ## Usage
 

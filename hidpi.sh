@@ -98,9 +98,6 @@ cat << EEF
 EEF
     #
     get_edid
-    
-    edID=$(echo $EDID | sed 's/../b5/21')
-    EDid=$(echo $edID | xxd -r -p | base64)
 
     thisDir=$(dirname $0)
     thatDir="/System/Library/Displays/Contents/Resources/Overrides"
@@ -438,6 +435,14 @@ function enable_hidpi_with_patch()
 {
     choose_icon
     main
+
+    version=${EDID:38:2}
+    basicparams=${EDID:40:2}
+    checksum=${EDID:254:2}
+    newchecksum=$(printf '%x' $((0x$checksum + 0x$version +0x$basicparams - 0x04 - 0x90)) | tail -c 2)
+    newedid=${EDID:0:38}0490${EDID:42:212}${newchecksum}
+    EDid=$(printf $newedid | xxd -r -p | base64)
+
     /usr/bin/sed -i "" "s:EDid:${EDid}:g" $dpiFile
     end
 }
