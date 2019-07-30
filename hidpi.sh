@@ -316,7 +316,7 @@ function choose_icon()
     rm -rf ${thisDir}/tmp/
     mkdir -p ${thisDir}/tmp/
     mkdir -p ${thisDir}/tmp/DisplayVendorID-${Vid}
-    curl -fsSL ${downloadHost}/Icons.plist -o ${thisDir}/tmp/Icons.plist
+    curl -fsSL "${downloadHost}/Icons.plist" -o ${thisDir}/tmp/Icons.plist
 
     echo ""
     echo "-------------------------------------"
@@ -335,15 +335,15 @@ read -p "${langInputChoice} [1~6]: " logo
 case ${logo} in
     1) Picon=${imacicon}
         RP=("33" "68" "160" "90")
-        curl -fsSL ${downloadHost}/displayIcons/iMac.icns -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/iMac.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     2) Picon=${mbicon}
         RP=("52" "66" "122" "76")
-        curl -fsSL ${downloadHost}/displayIcons/MacBook.icns -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/MacBook.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     3) Picon=${mbpicon}
         RP=("40" "62" "147" "92")
-        curl -fsSL ${downloadHost}/displayIcons/MacBookPro.icns -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/MacBookPro.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     4) Picon=${lgicon}
         RP=("11" "47" "202" "114")
@@ -351,9 +351,9 @@ case ${logo} in
         ;;
     5) Picon=${proxdricon}
         RP=("5" "45" "216" "121")
-        curl -fsSL ${downloadHost}/displayIcons/ProDisplayXDR.icns -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         if [[ ! -f ${thatDir}/DisplayVendorID-610/DisplayProductID-ae2f_Landscape.tiff ]]; then
-            curl -fsSL ${downloadHost}/displayIcons/ProDisplayXDR.tiff -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.tiff
+            curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.tiff" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.tiff
             Picon=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.tiff"
         fi
         ;;
