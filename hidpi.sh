@@ -59,6 +59,7 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langChooseResOp3="(3) 手动输入分辨率"
 fi
 
+# downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
 downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
 # downloadHost="http://127.0.0.1:8080"
 
@@ -209,6 +210,14 @@ function generate_restore_cmd()
 rm -rf ${thisDir}/tmp/
 mkdir -p ${thisDir}/tmp/
 cat > "${thisDir}/tmp/disable" <<-\CCC
+#!/bin/sh
+
+systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
+
+if [[ "${systemVersion}" -ge "15" ]]; then
+    sudo mount -uw / && killall Finder
+fi
+
 function get_edid()
 {
     local index=0
