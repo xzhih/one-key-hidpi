@@ -1,8 +1,10 @@
 #!/bin/sh
 
+sipChecker=($(csrutil status | awk '{ print $5 }'))
 systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
 systemLanguage=($(locale | grep LANG | sed s/'LANG='// | tr -d '"' | cut -d "." -f 1))
 
+disableSIP="Need to disable SIP"
 langDisplay="Display"
 langMonitors="Monitors"
 langIndex="Index"
@@ -27,10 +29,12 @@ langEnableOp3="(3) Disable HIDPI"
 
 langChooseRes="resolution config"
 langChooseResOp1="(1) 1080P Display"
-langChooseResOp2="(2) 2K Display"
-langChooseResOp3="(3) Manual input resolution"
+langChooseResOp2="(2) 1080P Display (use 1424x802, fix underscaled after sleep)"
+langChooseResOp3="(3) 2K Display"
+langChooseResOp4="(4) Manual input resolution"
 
 if [[ "${systemLanguage}" == "zh_CN" ]]; then 
+    disableSIP="需要关闭 SIP"
     langDisplay="显示器"
     langMonitors="显示器"
     langIndex="序号"
@@ -55,13 +59,19 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
 
     langChooseRes="选择分辨率配置"
     langChooseResOp1="(1) 1080P 显示屏"
-    langChooseResOp2="(2) 2K 显示屏"
-    langChooseResOp3="(3) 手动输入分辨率"
+    langChooseResOp2="(2) 1080P 显示屏 (使用 1424x802 分辨率，修复睡眠唤醒后的屏幕缩小问题)"
+    langChooseResOp3="(3) 2K 显示屏"
+    langChooseResOp4="(4) 手动输入分辨率"
 fi
 
 # downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
 downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
 # downloadHost="http://127.0.0.1:8080"
+
+if [ "${sipChecker}" != "disabled." ]; then
+    echo "${disableSIP}";
+    exit 0
+fi
 
 if [[ "${systemVersion}" -ge "15" ]]; then
     sudo mount -uw / && killall Finder
@@ -419,6 +429,7 @@ echo "------------------------------------------"
 echo ${langChooseResOp1}
 echo ${langChooseResOp2}
 echo ${langChooseResOp3}
+echo ${langChooseResOp4}
 echo ""
 
 #
@@ -426,12 +437,14 @@ read -p "${langInputChoice}: " res
 case ${res} in
     1 ) create_res_1 1680x944 1440x810 1280x720 1024x576
     ;;
-    2 ) create_res_1 2048x1152 1920x1080 1680x944 1440x810 1280x720
+    2 ) create_res_1 1680x944 1424x802 1280x720 1024x576
+    ;;
+    3 ) create_res_1 2048x1152 1920x1080 1680x944 1440x810 1280x720
     create_res_2 1024x576
     create_res_3 960x540
     create_res_4 2048x1152 1920x1080
     ;;
-    3 ) custom_res;;
+    4 ) custom_res;;
 esac
 
 create_res_2 1280x800 1280x720 960x600 960x540 640x360
@@ -453,6 +466,9 @@ FFF
 # end
 function end()
 {
+    sudo chown -R root:wheel ${thisDir}/tmp/
+    sudo chmod -R 0755 ${thisDir}/tmp/
+    sudo chmod 0644 ${thisDir}/tmp/DisplayVendorID-${Vid}/*
     sudo cp -r ${thisDir}/tmp/* ${thatDir}/
     sudo rm -rf ${thisDir}/tmp
     echo "${langEnabled}"
