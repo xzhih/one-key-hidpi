@@ -159,6 +159,9 @@ function get_edid()
     fi
     gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
     gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
+    if [[ ${gDisplayProduct_pr} == 0 ]]; then
+        gDisplayProductID_reverse="${gDisplayProduct_st}"
+    fi
     gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
 
     EDID=$gMonitor
