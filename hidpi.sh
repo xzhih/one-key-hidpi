@@ -64,8 +64,8 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langChooseResOp4="(4) 手动输入分辨率"
 fi
 
-# downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
-downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
+downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
+# downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
 # downloadHost="http://127.0.0.1:8080"
 
 if [ "${sipChecker}" != "disabled." ]; then
