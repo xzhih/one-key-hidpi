@@ -28,10 +28,12 @@ langEnableOp2="(2) Enable HIDPI (with EDID)"
 langEnableOp3="(3) Disable HIDPI"
 
 langChooseRes="resolution config"
-langChooseResOp1="(1) 1080P Display"
-langChooseResOp2="(2) 1080P Display (use 1424x802, fix underscaled after sleep)"
-langChooseResOp3="(3) 2K Display"
-langChooseResOp4="(4) Manual input resolution"
+langChooseResOp1="(1) 1920x1080 Display"
+langChooseResOp2="(2) 1920x1080 Display (use 1424x802, fix underscaled after sleep)"
+langChooseResOp3="(3) 1920x1200 Display"
+langChooseResOp4="(4) 2560x1440 Display"
+langChooseResOp5="(5) 3000x2000 Display"
+langChooseResOpCustom="(6) Manual input resolution"
 
 if [[ "${systemLanguage}" == "zh_CN" ]]; then 
     disableSIP="需要关闭 SIP"
@@ -58,10 +60,12 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langEnableOp3="(3) 关闭HIDPI"
 
     langChooseRes="选择分辨率配置"
-    langChooseResOp1="(1) 1080P 显示屏"
-    langChooseResOp2="(2) 1080P 显示屏 (使用 1424x802 分辨率，修复睡眠唤醒后的屏幕缩小问题)"
-    langChooseResOp3="(3) 2K 显示屏"
-    langChooseResOp4="(4) 手动输入分辨率"
+    langChooseResOp1="(1) 1920x1080 显示屏"
+    langChooseResOp2="(2) 1920x1080 显示屏 (使用 1424x802 分辨率，修复睡眠唤醒后的屏幕缩小问题)"
+    langChooseResOp3="(3) 1920x1200 显示屏"
+    langChooseResOp4="(4) 2560x1440 显示屏"
+    langChooseResOp5="(5) 3000x2000 显示屏"
+    langChooseResOpCustom="(6) 手动输入分辨率"
 fi
 
 # downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
@@ -433,26 +437,48 @@ echo ${langChooseResOp1}
 echo ${langChooseResOp2}
 echo ${langChooseResOp3}
 echo ${langChooseResOp4}
+echo ${langChooseResOp5}
+echo ${langChooseResOpCustom}
 echo ""
 
 #
 read -p "${langInputChoice}: " res
 case ${res} in
-    1 ) create_res_1 1680x944 1440x810 1280x720 1024x576
+    1 ) create_res_1 1680x945 1440x810 1280x720 1024x576
+        create_res_2 1280x800 1280x720 960x600 960x540 640x360
+        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+        create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
     ;;
-    2 ) create_res_1 1680x944 1424x802 1280x720 1024x576
+    2 ) create_res_1 1680x945 1424x802 1280x720 1024x576
+        create_res_2 1280x800 1280x720 960x600 960x540 640x360
+        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+        create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
     ;;
-    3 ) create_res_1 2048x1152 1920x1080 1680x944 1440x810 1280x720
-    create_res_2 1024x576
-    create_res_3 960x540
-    create_res_4 2048x1152 1920x1080
+    3 ) create_res_1 1680x1050 1440x900 1280x800 1024x640
+        create_res_2 1280x800 1280x720 960x600 960x540 640x360
+        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+        create_res_4 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
     ;;
-    4 ) custom_res;;
+    4 ) create_res_1 2560x1440 2048x1152 1920x1080 1760x990 1680x945 1440x810 1360x765 1280x720
+        create_res_2 1360x765 1280x800 1280x720 1024x576 960x600 960x540 640x360
+        create_res_3 960x540 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+        create_res_4 2048x1152 1920x1080 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
+    ;;
+    5 ) create_res_1 3000x2000 2880x1920 2250x1500 1920x1280 1680x1050 1440x900 1280x800 1024x640
+        create_res_2 1280x800 1280x720 960x600 960x540 640x360
+        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+        create_res_4 1920x1280 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
+    ;;
+    6 ) custom_res
+        create_res_2 1360x765 1280x800 1280x720 960x600 960x540 640x360
+        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+        create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
+    ;;
+    *)
+    echo "${langEnterError}";
+    exit 0
+    ;;
 esac
-
-create_res_2 1280x800 1280x720 960x600 960x540 640x360
-create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-create_res_4 1680x944 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
 
 cat >> "${dpiFile}" <<-\FFF
             </array>
@@ -474,6 +500,7 @@ function end()
     sudo chmod 0644 ${thisDir}/tmp/DisplayVendorID-${Vid}/*
     sudo cp -r ${thisDir}/tmp/* ${thatDir}/
     sudo rm -rf ${thisDir}/tmp
+    sudo defaults write /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled -bool YES
     echo "${langEnabled}"
     echo "${langEnabledLog}"
 }
