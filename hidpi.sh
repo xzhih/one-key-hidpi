@@ -69,10 +69,10 @@ downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
 # downloadHost="http://127.0.0.1:8080"
 
 if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]]; then
-  :
+    :
 else
-  echo "${disableSIP}";
-  exit 0
+    echo "${disableSIP}";
+    exit 0
 fi
 
 if [[ "${systemVersion}" -ge "15" ]]; then
