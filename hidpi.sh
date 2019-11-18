@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 sipChecker=($(csrutil status | awk '{ print $5 }'))
 systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
@@ -103,13 +103,13 @@ function get_edid()
             let index++
             MonitorName=("$(echo ${display:190:24} | xxd -p -r)") 
             VendorID=${display:16:4}
-            ProductID=${display:20:4}
+            ProductID=${gMonitor:22:2}${gMonitor:20:2}
 
-            if [[ $VendorID == 0610 ]]; then
+            if [[ ${VendorID} == 0610 ]]; then
                 MonitorName="Apple Display"
             fi
 
-            if [[ $VendorID == 1e6d ]]; then
+            if [[ ${VendorID} == 1e6d ]]; then
                 MonitorName="LG Display"
             fi
 
@@ -140,39 +140,12 @@ function get_edid()
     else
         gMonitor=${gDisplayInf}
     fi
-    
-    if [[ ${gMonitor:16:1} == 0 ]]; then
-        # get rid of the prefix 0
-        gDisplayVendorID_RAW=${gMonitor:17:3}
-    else
-        gDisplayVendorID_RAW=${gMonitor:16:4}
-    fi
 
-    # convert from hex to dec
-    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
-    gDisplayProductID_RAW=${gMonitor:20:4}
-    
-    # Exchange two bytes
-    # Fix an issue that will cause wrong name of DisplayProductID
-    
-    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
-        # get rid of the prefix 0
-        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
-    else
-        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
-    fi
-    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
-    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
-    if [[ ${gDisplayProduct_pr} == 0 ]]; then
-        gDisplayProductID_reverse="${gDisplayProduct_st}"
-    fi
-    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
-
-    EDID=$gMonitor
-    VendorID=$gDisplayVendorID
-    ProductID=$gDisplayProductID 
-    Vid=$gDisplayVendorID_RAW
-    Pid=$gDisplayProductID_reverse 
+    EDID=${gMonitor}
+    VendorID=$((0x${gMonitor:16:4}))
+    ProductID=$((0x${gMonitor:22:2}${gMonitor:20:2}))
+    Vid=($(printf '%x\n' ${VendorID}))
+    Pid=($(printf '%x\n' ${ProductID}))
     # echo ${Vid}
     # echo ${Pid}
     # echo $EDID
@@ -215,9 +188,7 @@ EEF
         fi
     fi
     
-    if [[ ! -f ${thatDir}/HIDPI/disable ]]; then
-        generate_restore_cmd
-    fi
+    generate_restore_cmd
 }
 
 #
@@ -229,104 +200,57 @@ mkdir -p ${thisDir}/tmp/
 cat > "${thisDir}/tmp/disable" <<-\CCC
 #!/bin/sh
 
-systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
-
-if [[ "${systemVersion}" -ge "15" ]]; then
-    sudo mount -uw / && killall Finder
-fi
-
 function get_edid()
 {
     local index=0
     local selection=0
-
     gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
-
     if [[ "${#gDisplayInf[@]}" -ge 2 ]]; then
-
-        # Multi monitors detected. Choose target monitor.
-        echo ''
-        echo '                      Monitors                      '
-        echo '----------------------------------------------------'
-        echo '  Index  |  VendorID  |  ProductID  |  MonitorName  '
-        echo '----------------------------------------------------'
-
+        echo '              Monitors              '
+        echo '------------------------------------'
+        echo '  Index  |  VendorID  |  ProductID  '
+        echo '------------------------------------'
         for display in "${gDisplayInf[@]}"
         do
             let index++
-            MonitorName=("$(echo ${display:190:24} | xxd -p -r)") 
-            VendorID=${display:16:4}
-            ProductID=${display:20:4}
-
-            if [[ $VendorID == 0610 ]]; then
-                MonitorName="Apple Display"
-            fi
-
-            if [[ $VendorID == 1e6d ]]; then
-                MonitorName="LG Display"
-            fi
-
-            printf "    %d    |    $VendorID    |     $ProductID    |  $MonitorName\n" $index
+            printf "    %d    |    ${display:16:4}    |    ${gMonitor:22:2}${gMonitor:20:2}\n" $index
         done
-
-        echo '----------------------------------------------------'
-
+        echo '------------------------------------'
         read -p "Choose the display: " selection
         case $selection in
             [[:digit:]]* ) 
                 if ((selection < 1 || selection > index)); then
-                    echo "Enter error. bye";
+                    echo "Enter error, bye";
                     exit 0
                 fi
                 let selection-=1
                 gMonitor=${gDisplayInf[$selection]}
                 ;;
-
             * ) 
-                echo "Enter error. bye";
+                echo "Enter error, bye";
                 exit 0
                 ;;
         esac
     else
         gMonitor=${gDisplayInf}
     fi
-    
-    if [[ ${gMonitor:16:1} == 0 ]]; then
-        gDisplayVendorID_RAW=${gMonitor:17:3}
-    else
-        gDisplayVendorID_RAW=${gMonitor:16:4}
-    fi
-
-    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
-    gDisplayProductID_RAW=${gMonitor:20:4}
-
-    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
-        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
-    else
-        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
-    fi
-
-    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
-    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
-    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
 
     EDID=$gMonitor
-    Vid=$gDisplayVendorID_RAW
-    Pid=$gDisplayProductID_reverse 
-    # echo ${Vid}
-    # echo ${Pid}
-    # echo $EDID
+    VendorID=$((0x${gMonitor:16:4}))
+    ProductID=$((0x${gMonitor:22:2}${gMonitor:20:2}))
+    Vid=($(printf '%x\n' ${VendorID}))
+    Pid=($(printf '%x\n' ${ProductID}))
 }
 
 get_edid
 
 if [[ -d ../DisplayVendorID-${Vid} ]]; then
-    sudo rm -rf ../DisplayVendorID-${Vid} 
+    rm -rf ../DisplayVendorID-${Vid} 
 fi
 
-sudo rm -rf ../Icons.plist
-sudo cp -r ./backup/* ../
-sudo rm -rf ./disable
+rm -rf ../Icons.plist
+cp -r ./backup/* ../
+rm -rf ./disable
 echo "HIDPI Disabled"
 CCC
 
@@ -599,8 +523,8 @@ function enable_hidpi_with_patch()
     version=${EDID:38:2}
     basicparams=${EDID:40:2}
     checksum=${EDID:254:2}
-    newchecksum=$(printf '%x' $((0x$checksum + 0x$version +0x$basicparams - 0x04 - 0x90)) | tail -c 2)
-    newedid=${EDID:0:38}0490${EDID:42:212}${newchecksum}
+    newchecksum=$(printf '%x' $((0x${checksum} + 0x${version} +0x${basicparams} - 0x04 - 0x90)) | tail -c 2)
+    newedid=${EDID:0:38}0490${EDID:42:6}e6${EDID:50:204}${newchecksum}
     EDid=$(printf ${newedid} | xxd -r -p | base64)
 
     /usr/bin/sed -i "" "s:EDid:${EDid}:g" ${dpiFile}
