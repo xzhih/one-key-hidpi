@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 sipInfo=("$(csrutil status)")
 systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
@@ -28,12 +28,10 @@ langEnableOp2="(2) Enable HIDPI (with EDID)"
 langEnableOp3="(3) Disable HIDPI"
 
 langChooseRes="resolution config"
-langChooseResOp1="(1) 1920x1080 Display"
-langChooseResOp2="(2) 1920x1080 Display (use 1424x802, fix underscaled after sleep)"
-langChooseResOp3="(3) 1920x1200 Display"
-langChooseResOp4="(4) 2560x1440 Display"
-langChooseResOp5="(5) 3000x2000 Display"
-langChooseResOpCustom="(6) Manual input resolution"
+langChooseResOp1="(1) 1080P Display"
+langChooseResOp2="(2) 1080P Display (use 1424x802, fix underscaled after sleep)"
+langChooseResOp3="(3) 2K Display"
+langChooseResOp4="(4) Manual input resolution"
 
 if [[ "${systemLanguage}" == "zh_CN" ]]; then 
     disableSIP="需要关闭 SIP"
@@ -60,12 +58,10 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langEnableOp3="(3) 关闭HIDPI"
 
     langChooseRes="选择分辨率配置"
-    langChooseResOp1="(1) 1920x1080 显示屏"
-    langChooseResOp2="(2) 1920x1080 显示屏 (使用 1424x802 分辨率，修复睡眠唤醒后的屏幕缩小问题)"
-    langChooseResOp3="(3) 1920x1200 显示屏"
-    langChooseResOp4="(4) 2560x1440 显示屏"
-    langChooseResOp5="(5) 3000x2000 显示屏"
-    langChooseResOpCustom="(6) 手动输入分辨率"
+    langChooseResOp1="(1) 1080P 显示屏"
+    langChooseResOp2="(2) 1080P 显示屏 (使用 1424x802 分辨率，修复睡眠唤醒后的屏幕缩小问题)"
+    langChooseResOp3="(3) 2K 显示屏"
+    langChooseResOp4="(4) 手动输入分辨率"
 fi
 
 downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
@@ -105,13 +101,13 @@ function get_edid()
             let index++
             MonitorName=("$(echo ${display:190:24} | xxd -p -r)") 
             VendorID=${display:16:4}
-            ProductID=${gMonitor:22:2}${gMonitor:20:2}
+            ProductID=${display:20:4}
 
-            if [[ ${VendorID} == 0610 ]]; then
+            if [[ $VendorID == 0610 ]]; then
                 MonitorName="Apple Display"
             fi
 
-            if [[ ${VendorID} == 1e6d ]]; then
+            if [[ $VendorID == 1e6d ]]; then
                 MonitorName="LG Display"
             fi
 
@@ -142,12 +138,39 @@ function get_edid()
     else
         gMonitor=${gDisplayInf}
     fi
+    
+    if [[ ${gMonitor:16:1} == 0 ]]; then
+        # get rid of the prefix 0
+        gDisplayVendorID_RAW=${gMonitor:17:3}
+    else
+        gDisplayVendorID_RAW=${gMonitor:16:4}
+    fi
 
-    EDID=${gMonitor}
-    VendorID=$((0x${gMonitor:16:4}))
-    ProductID=$((0x${gMonitor:22:2}${gMonitor:20:2}))
-    Vid=($(printf '%x\n' ${VendorID}))
-    Pid=($(printf '%x\n' ${ProductID}))
+    # convert from hex to dec
+    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
+    gDisplayProductID_RAW=${gMonitor:20:4}
+    
+    # Exchange two bytes
+    # Fix an issue that will cause wrong name of DisplayProductID
+    
+    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
+        # get rid of the prefix 0
+        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
+    else
+        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
+    fi
+    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
+    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
+    if [[ ${gDisplayProduct_pr} == 0 ]]; then
+        gDisplayProductID_reverse="${gDisplayProduct_st}"
+    fi
+    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
+
+    EDID=$gMonitor
+    VendorID=$gDisplayVendorID
+    ProductID=$gDisplayProductID 
+    Vid=$gDisplayVendorID_RAW
+    Pid=$gDisplayProductID_reverse 
     # echo ${Vid}
     # echo ${Pid}
     # echo $EDID
@@ -190,7 +213,9 @@ EEF
         fi
     fi
     
-    generate_restore_cmd
+    if [[ ! -f ${thatDir}/HIDPI/disable ]]; then
+        generate_restore_cmd
+    fi
 }
 
 #
@@ -202,57 +227,104 @@ mkdir -p ${thisDir}/tmp/
 cat > "${thisDir}/tmp/disable" <<-\CCC
 #!/bin/sh
 
+systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
+
+if [[ "${systemVersion}" -ge "15" ]]; then
+    sudo mount -uw / && killall Finder
+fi
+
 function get_edid()
 {
     local index=0
     local selection=0
+
     gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
+
     if [[ "${#gDisplayInf[@]}" -ge 2 ]]; then
-        echo '              Monitors              '
-        echo '------------------------------------'
-        echo '  Index  |  VendorID  |  ProductID  '
-        echo '------------------------------------'
+
+        # Multi monitors detected. Choose target monitor.
+        echo ''
+        echo '                      Monitors                      '
+        echo '----------------------------------------------------'
+        echo '  Index  |  VendorID  |  ProductID  |  MonitorName  '
+        echo '----------------------------------------------------'
+
         for display in "${gDisplayInf[@]}"
         do
             let index++
-            printf "    %d    |    ${display:16:4}    |    ${gMonitor:22:2}${gMonitor:20:2}\n" $index
+            MonitorName=("$(echo ${display:190:24} | xxd -p -r)") 
+            VendorID=${display:16:4}
+            ProductID=${display:20:4}
+
+            if [[ $VendorID == 0610 ]]; then
+                MonitorName="Apple Display"
+            fi
+
+            if [[ $VendorID == 1e6d ]]; then
+                MonitorName="LG Display"
+            fi
+
+            printf "    %d    |    $VendorID    |     $ProductID    |  $MonitorName\n" $index
         done
-        echo '------------------------------------'
+
+        echo '----------------------------------------------------'
+
         read -p "Choose the display: " selection
         case $selection in
             [[:digit:]]* ) 
                 if ((selection < 1 || selection > index)); then
-                    echo "Enter error, bye";
+                    echo "Enter error. bye";
                     exit 0
                 fi
                 let selection-=1
                 gMonitor=${gDisplayInf[$selection]}
                 ;;
+
             * ) 
-                echo "Enter error, bye";
+                echo "Enter error. bye";
                 exit 0
                 ;;
         esac
     else
         gMonitor=${gDisplayInf}
     fi
+    
+    if [[ ${gMonitor:16:1} == 0 ]]; then
+        gDisplayVendorID_RAW=${gMonitor:17:3}
+    else
+        gDisplayVendorID_RAW=${gMonitor:16:4}
+    fi
+
+    gDisplayVendorID=$((0x$gDisplayVendorID_RAW))
+    gDisplayProductID_RAW=${gMonitor:20:4}
+
+    if [[ ${gDisplayProductID_RAW:2:1} == 0 ]]; then
+        gDisplayProduct_pr=${gDisplayProductID_RAW:3:1}
+    else
+        gDisplayProduct_pr=${gDisplayProductID_RAW:2:2}
+    fi
+
+    gDisplayProduct_st=${gDisplayProductID_RAW:0:2}
+    gDisplayProductID_reverse="${gDisplayProduct_pr}${gDisplayProduct_st}"
+    gDisplayProductID=$((0x$gDisplayProduct_pr$gDisplayProduct_st))
 
     EDID=$gMonitor
-    VendorID=$((0x${gMonitor:16:4}))
-    ProductID=$((0x${gMonitor:22:2}${gMonitor:20:2}))
-    Vid=($(printf '%x\n' ${VendorID}))
-    Pid=($(printf '%x\n' ${ProductID}))
+    Vid=$gDisplayVendorID_RAW
+    Pid=$gDisplayProductID_reverse 
+    # echo ${Vid}
+    # echo ${Pid}
+    # echo $EDID
 }
 
 get_edid
 
 if [[ -d ../DisplayVendorID-${Vid} ]]; then
-    rm -rf ../DisplayVendorID-${Vid} 
+    sudo rm -rf ../DisplayVendorID-${Vid} 
 fi
 
-rm -rf ../Icons.plist
-cp -r ./backup/* ../
-rm -rf ./disable
+sudo rm -rf ../Icons.plist
+sudo cp -r ./backup/* ../
+sudo rm -rf ./disable
 echo "HIDPI Disabled"
 CCC
 
@@ -363,48 +435,26 @@ echo ${langChooseResOp1}
 echo ${langChooseResOp2}
 echo ${langChooseResOp3}
 echo ${langChooseResOp4}
-echo ${langChooseResOp5}
-echo ${langChooseResOpCustom}
 echo ""
 
 #
 read -p "${langInputChoice}: " res
 case ${res} in
-    1 ) create_res_1 1680x945 1440x810 1280x720 1024x576
-        create_res_2 1280x800 1280x720 960x600 960x540 640x360
-        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-        create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
+    1 ) create_res_1 1680x944 1440x810 1280x720 1024x576
     ;;
-    2 ) create_res_1 1680x945 1424x802 1280x720 1024x576
-        create_res_2 1280x800 1280x720 960x600 960x540 640x360
-        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-        create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
+    2 ) create_res_1 1680x944 1424x802 1280x720 1024x576
     ;;
-    3 ) create_res_1 1680x1050 1440x900 1280x800 1024x640
-        create_res_2 1280x800 1280x720 960x600 960x540 640x360
-        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-        create_res_4 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
+    3 ) create_res_1 2048x1152 1920x1080 1680x944 1440x810 1280x720
+    create_res_2 1024x576
+    create_res_3 960x540
+    create_res_4 2048x1152 1920x1080
     ;;
-    4 ) create_res_1 2560x1440 2048x1152 1920x1080 1760x990 1680x945 1440x810 1360x765 1280x720
-        create_res_2 1360x765 1280x800 1280x720 1024x576 960x600 960x540 640x360
-        create_res_3 960x540 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-        create_res_4 2048x1152 1920x1080 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
-    ;;
-    5 ) create_res_1 3000x2000 2880x1920 2250x1500 1920x1280 1680x1050 1440x900 1280x800 1024x640
-        create_res_2 1280x800 1280x720 960x600 960x540 640x360
-        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-        create_res_4 1920x1280 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
-    ;;
-    6 ) custom_res
-        create_res_2 1360x765 1280x800 1280x720 960x600 960x540 640x360
-        create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
-        create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
-    ;;
-    *)
-    echo "${langEnterError}";
-    exit 0
-    ;;
+    4 ) custom_res;;
 esac
+
+create_res_2 1280x800 1280x720 960x600 960x540 640x360
+create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
+create_res_4 1680x944 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
 
 cat >> "${dpiFile}" <<-\FFF
             </array>
@@ -426,7 +476,6 @@ function end()
     sudo chmod 0644 ${thisDir}/tmp/DisplayVendorID-${Vid}/*
     sudo cp -r ${thisDir}/tmp/* ${thatDir}/
     sudo rm -rf ${thisDir}/tmp
-    sudo defaults write /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled -bool YES
     echo "${langEnabled}"
     echo "${langEnabledLog}"
 }
@@ -525,8 +574,8 @@ function enable_hidpi_with_patch()
     version=${EDID:38:2}
     basicparams=${EDID:40:2}
     checksum=${EDID:254:2}
-    newchecksum=$(printf '%x' $((0x${checksum} + 0x${version} +0x${basicparams} - 0x04 - 0x90)) | tail -c 2)
-    newedid=${EDID:0:38}0490${EDID:42:6}e6${EDID:50:204}${newchecksum}
+    newchecksum=$(printf '%x' $((0x$checksum + 0x$version +0x$basicparams - 0x04 - 0x90)) | tail -c 2)
+    newedid=${EDID:0:38}0490${EDID:42:212}${newchecksum}
     EDid=$(printf ${newedid} | xxd -r -p | base64)
 
     /usr/bin/sed -i "" "s:EDid:${EDid}:g" ${dpiFile}
