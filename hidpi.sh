@@ -76,11 +76,11 @@ downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
 # downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
 # downloadHost="http://127.0.0.1:8080"
 
-shellDir="$( cd "$( dirname "$0"  )" && pwd  )"
+shellDir="$(dirname $0)"
 
 if [ -d "${shellDir}/displayIcons" ];then
     echo $langLocalMode
-    downloadHost="fiel://${shellDir}"
+    downloadHost="file://${shellDir}"
 else
     echo $langRemoteMode
 fi
