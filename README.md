@@ -24,7 +24,7 @@ System Preferences
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"
 ```
 
-2.Local Mode: Download ZIP, decompressing it, drag the `hidpi.sh` file into the terminal and press Enter to run
+2.Local Mode: Download ZIP, decompressing it, and double click `hidpi.command` to run
 
 ![RUN](./img/run.jpg)
 

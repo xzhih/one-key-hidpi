@@ -26,7 +26,7 @@ macOS 的 DPI 机制和 Windows 下不一样，比如 1080p 的屏幕在 Windows
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"
 ```
 
-2.本地模式: 下载项目解压,把 `hidpi.sh` 拖进终端按回车运行
+2.本地模式: 下载项目解压,双击 `hidpi.command` 运行
 
 ![运行](./img/run-zh.jpg)
 
