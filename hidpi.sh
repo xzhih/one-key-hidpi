@@ -5,6 +5,8 @@ systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
 systemLanguage=($(locale | grep LANG | sed s/'LANG='// | tr -d '"' | cut -d "." -f 1))
 
 disableSIP="Need to disable SIP"
+langRemoteMode="Remote Mode"
+langLocalMode="Local Mode"
 langDisplay="Display"
 langMonitors="Monitors"
 langIndex="Index"
@@ -37,6 +39,8 @@ langChooseResOpCustom="(6) Manual input resolution"
 
 if [[ "${systemLanguage}" == "zh_CN" ]]; then 
     disableSIP="需要关闭 SIP"
+    langRemoteMode="远程模式"
+    langLocalMode="本地模式"
     langDisplay="显示器"
     langMonitors="显示器"
     langIndex="序号"
@@ -71,6 +75,15 @@ fi
 downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
 # downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
 # downloadHost="http://127.0.0.1:8080"
+
+shellDir="$( cd "$( dirname "$0"  )" && pwd  )"
+
+if [ -d "${shellDir}/displayIcons" ];then
+    echo $langLocalMode
+    downloadHost="fiel://${shellDir}"
+else
+    echo $langRemoteMode
+fi
 
 if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled" ]]; then
     :
