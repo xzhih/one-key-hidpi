@@ -18,11 +18,13 @@ System Preferences
 
 ## Usage
 
-Run this script in Terminal
+1.Remote Mode: Run this script in Terminal
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"
 ```
+
+2.Local Mode: Download ZIP, decompressing it, drag the `hidpi.sh` file into the terminal and press Enter to run
 
 ![RUN](./img/run.jpg)
 
