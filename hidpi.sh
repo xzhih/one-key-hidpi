@@ -72,7 +72,7 @@ downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
 # downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
 # downloadHost="http://127.0.0.1:8080"
 
-if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]]; then
+if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled" ]]; then
     :
 else
     echo "${disableSIP}";
