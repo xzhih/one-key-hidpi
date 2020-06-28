@@ -51,8 +51,8 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langInputChoice="输入你的选择"
     langEnterError="输入错误，再见了您嘞！"
     langBackingUp="正在备份(怎么还原请看说明)..."
-    langEnabled="开启成功，重启生效"
-    langDisabled="关闭成功，重启生效"
+    langEnabled="开启成功，重启或重新插拔显示器生效"
+    langDisabled="关闭成功，重启或重新插拔显示器生效"
     langEnabledLog="首次重启开机logo会变得巨大，之后就不会了"
     langCustomRes="输入想要开启的 HIDPI 分辨率，用空格隔开，就像这样：1680x945 1600x900 1440x810"
 
@@ -85,16 +85,16 @@ else
     echo $langRemoteMode
 fi
 
-if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled" ]]; then
-    :
-else
-    echo "${disableSIP}";
-    exit 0
-fi
-
-if [[ "${systemVersion}" -ge "15" ]]; then
-    sudo mount -uw / && killall Finder
-fi
+# if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled" ]]; then
+#     :
+# else
+#     echo "${disableSIP}";
+#     exit 0
+# fi
+# 
+# if [[ "${systemVersion}" -ge "15" ]]; then
+#     sudo mount -uw / && killall Finder
+# fi
 
 function get_edid()
 {
@@ -184,8 +184,8 @@ EEF
     get_edid
 
     thisDir=$(dirname $0)
-    thatDir="/System/Library/Displays/Contents/Resources/Overrides"
-    Overrides="\/System\/Library\/Displays\/Contents\/Resources\/Overrides"
+    thatDir="/Library/Displays/Contents/Resources/Overrides"
+    Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
     
     DICON="com\.apple\.cinema-display"
     imacicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
