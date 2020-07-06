@@ -29,6 +29,9 @@ langEnableOp1="(1) Enable HIDPI"
 langEnableOp2="(2) Enable HIDPI (with EDID)"
 langEnableOp3="(3) Disable HIDPI"
 
+langDisableOpt1="(1) Disable HIDPI on this monitor"
+langDisableOpt2="(2) Reset all settings to macOS default"
+
 langChooseRes="resolution config"
 langChooseResOp1="(1) 1920x1080 Display"
 langChooseResOp2="(2) 1920x1080 Display (use 1424x802, fix underscaled after sleep)"
@@ -63,6 +66,9 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langEnableOp2="(2) 开启HIDPI(同时注入EDID)"
     langEnableOp3="(3) 关闭HIDPI"
 
+    langDisableOpt1="(1) 在此显示器上禁用 HIDPI"
+    langDisableOpt2="(2) 还原所有设置至 macOS 默认"
+
     langChooseRes="选择分辨率配置"
     langChooseResOp1="(1) 1920x1080 显示屏"
     langChooseResOp2="(2) 1920x1080 显示屏 (使用 1424x802 分辨率，修复睡眠唤醒后的屏幕缩小问题)"
@@ -89,7 +95,7 @@ if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{pri
     :
 else
     echo "${disableSIP}";
-    exit 0
+    exit 1
 fi
 
 # Starting from macOS Big Sur (16), this method no longer works
@@ -142,7 +148,7 @@ function get_edid()
                 # Lower selection (arrays start at zero).
                 if ((selection < 1 || selection > index)); then
                     echo "${langEnterError}";
-                    exit 0
+                    exit 1
                 fi
                 let selection-=1
                 gMonitor=${gDisplayInf[$selection]}
@@ -150,7 +156,7 @@ function get_edid()
 
             * ) 
                 echo "${langEnterError}";
-                exit 0
+                exit 1
                 ;;
         esac
     else
@@ -207,19 +213,18 @@ EEF
     fi
 
     # In Big Sur+ files are created in a seperate dir, not necessary to backup
-    if [[ "${systemVersion}" -le "15" ]]; then
-        if [[ ! -d ${thatDir}/HIDPI/backup ]]; then
-            echo "${langBackingUp}"
-            sudo mkdir -p ${thatDir}/HIDPI/backup
-            sudo cp ${thatSysDir}/Icons.plist ${thatDir}/HIDPI/backup/
+    sudo mkdir -p ${thatDir}/HIDPI
+    if [[ ! -d ${thatDir}/HIDPI/backup && "${systemVersion}" -le "15" ]]; then
+        echo "${langBackingUp}"
+        sudo mkdir -p ${thatDir}/HIDPI/backup
+        sudo cp ${thatSysDir}/Icons.plist ${thatDir}/HIDPI/backup/
 
-            if [[ -d ${thatSysDir}/DisplayVendorID-${Vid} ]]; then
-                sudo cp -r ${thatSysDir}/DisplayVendorID-${Vid} ${thatDir}/HIDPI/backup/
-            fi
+        if [[ -d ${thatSysDir}/DisplayVendorID-${Vid} ]]; then
+            sudo cp -r ${thatSysDir}/DisplayVendorID-${Vid} ${thatDir}/HIDPI/backup/
         fi
-
-        generate_restore_cmd
     fi
+
+    generate_restore_cmd
 }
 
 #
@@ -230,6 +235,8 @@ rm -rf ${thisDir}/tmp/
 mkdir -p ${thisDir}/tmp/
 cat > "${thisDir}/tmp/disable" <<-\CCC
 #!/bin/sh
+
+systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
 
 function get_edid()
 {
@@ -252,14 +259,14 @@ function get_edid()
             [[:digit:]]* ) 
                 if ((selection < 1 || selection > index)); then
                     echo "Enter error, bye";
-                    exit 0
+                    exit 1
                 fi
                 let selection-=1
                 gMonitor=${gDisplayInf[$selection]}
                 ;;
             * ) 
                 echo "Enter error, bye";
-                exit 0
+                exit 1
                 ;;
         esac
     else
@@ -275,13 +282,39 @@ function get_edid()
 
 get_edid
 
-if [[ -d ../DisplayVendorID-${Vid} ]]; then
-    rm -rf ../DisplayVendorID-${Vid} 
+rootPath="../../../../../../.."
+if [[ "${systemVersion}" -ge "16" ]];
+    rootPath="../../../../../.."
 fi
 
-rm -rf ../Icons.plist
-cp -r ./backup/* ../
-rm -rf ./disable
+echo ""
+echo "${langDisableOpt1}"
+echo "${langDisableOpt2}"
+echo ""
+
+read -p "${langInputChoice} [1~2]: " input
+case ${input} in
+    1) ${rootPath}/usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ../Icons.plist
+    ;;
+    2)  if [[ "${systemVersion}" -ge "16" ]]; then
+            rm -rf ${rootPath}/Library/Displays
+        else
+            if [[ -d ../DisplayVendorID-${Vid} ]]; then
+                rm -rf ../DisplayVendorID-${Vid} 
+            fi
+
+            rm -rf ../Icons.plist
+            cp -r ./backup/* ../
+            rm -rf ../HIDPI
+        fi
+    ;;
+    *) 
+
+    echo "Enter error, bye";
+    exit 1
+    ;;
+esac
+
 echo "HIDPI Disabled"
 CCC
 
@@ -343,7 +376,7 @@ case ${logo} in
     *)
 
     echo "${langEnterError}";
-    exit 0
+    exit 1
     ;;
 esac 
 
@@ -431,7 +464,7 @@ case ${res} in
     ;;
     *)
     echo "${langEnterError}";
-    exit 0
+    exit 1
     ;;
 esac
 
@@ -565,17 +598,33 @@ function enable_hidpi_with_patch()
 # disable
 function disable()
 {
-    if [[ -d ${thatDir} && "${systemVersion}" -ge "16" ]]; then
-        sudo rm -rf ${libDisplaysDir}
-    else
-        if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
-            sudo rm -rf ${thatDir}/DisplayVendorID-${Vid} 
-        fi
+    echo ""
+    echo "${langDisableOpt1}"
+    echo "${langDisableOpt2}"
+    echo ""
 
-        sudo rm -rf ${thatDir}/Icons.plist
-        sudo cp -r ${thatDir}/HIDPI/backup/* ${thatDir}/
-        sudo rm -rf ${thatDir}/HIDPI/disable
-    fi
+    read -p "${langInputChoice} [1~2]: " input
+    case ${input} in
+        1) sudo /usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ${thatDir}/Icons.plist
+        ;;
+        2)  if [[ "${systemVersion}" -ge "16" ]]; then
+                sudo rm -rf ${libDisplaysDir}
+            else
+                if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
+                    sudo rm -rf ${thatDir}/DisplayVendorID-${Vid} 
+                fi
+
+                sudo rm -rf ${thatDir}/Icons.plist
+                sudo cp -r ${thatDir}/HIDPI/backup/* ${thatDir}/
+                sudo rm -rf ${thatDir}/HIDPI
+            fi
+        ;;
+        *) 
+
+        echo "${langEnterError}";
+        exit 1
+        ;;
+    esac 
 
     echo "${langDisabled}"
 }
@@ -602,7 +651,7 @@ case ${input} in
     *) 
 
     echo "${langEnterError}";
-    exit 0
+    exit 1
     ;;
 esac 
 }
