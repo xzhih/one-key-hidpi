@@ -98,11 +98,6 @@ else
     exit 1
 fi
 
-# Starting from macOS Big Sur (16), this method no longer works
-if [[ "${systemVersion}" == "15" ]]; then
-    sudo mount -uw / && killall Finder
-fi
-
 function get_edid()
 {
     local index=0
@@ -196,10 +191,6 @@ EEF
     thatSysDir="/System${thatDir}"
     Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
     sysOverrides="\/System${Overrides}"
-    if [[ "${systemVersion}" -le "15" ]]; then
-        thatDir=${thatSysDir}
-        Overrides=${sysOverrides}
-    fi
     
     DICON="com\.apple\.cinema-display"
     imacicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
@@ -208,20 +199,8 @@ EEF
     lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
     proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
 
-    if [[ ! -d ${thatDir} && "${systemVersion}" -ge "16" ]]; then
-        sudo mkdir -p ${thatDir}
-    fi
-
-    # In Big Sur+ files are created in a seperate dir, not necessary to backup
-    sudo mkdir -p ${thatDir}/HIDPI
-    if [[ ! -d ${thatDir}/HIDPI/backup && "${systemVersion}" -le "15" ]]; then
-        echo "${langBackingUp}"
-        sudo mkdir -p ${thatDir}/HIDPI/backup
-        sudo cp ${thatSysDir}/Icons.plist ${thatDir}/HIDPI/backup/
-
-        if [[ -d ${thatSysDir}/DisplayVendorID-${Vid} ]]; then
-            sudo cp -r ${thatSysDir}/DisplayVendorID-${Vid} ${thatDir}/HIDPI/backup/
-        fi
+    if [[ ! -d ${thatDir}/HIDPI ]]; then
+        sudo mkdir -p ${thatDir}/HIDPI
     fi
 
     generate_restore_cmd
@@ -235,8 +214,6 @@ rm -rf ${thisDir}/tmp/
 mkdir -p ${thisDir}/tmp/
 cat > "${thisDir}/tmp/disable" <<-\CCC
 #!/bin/sh
-
-systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
 
 function get_edid()
 {
@@ -282,31 +259,18 @@ function get_edid()
 
 get_edid
 
-rootPath="../../../../../../.."
-if [[ "${systemVersion}" -ge "16" ]];
-    rootPath="../../../../../.."
-fi
+rootPath="../../../../../.."
 
 echo ""
-echo "${langDisableOpt1}"
-echo "${langDisableOpt2}"
+echo "(1) Disable HIDPI on this monitor"
+echo "(2) Reset all settings to macOS default"
 echo ""
 
-read -p "${langInputChoice} [1~2]: " input
+read -p "Enter your choice [1~2]: " input
 case ${input} in
     1) ${rootPath}/usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ../Icons.plist
     ;;
-    2)  if [[ "${systemVersion}" -ge "16" ]]; then
-            rm -rf ${rootPath}/Library/Displays
-        else
-            if [[ -d ../DisplayVendorID-${Vid} ]]; then
-                rm -rf ../DisplayVendorID-${Vid} 
-            fi
-
-            rm -rf ../Icons.plist
-            cp -r ./backup/* ../
-            rm -rf ../HIDPI
-        fi
+    2) rm -rf ${rootPath}/Library/Displays
     ;;
     *) 
 
@@ -607,17 +571,7 @@ function disable()
     case ${input} in
         1) sudo /usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ${thatDir}/Icons.plist
         ;;
-        2)  if [[ "${systemVersion}" -ge "16" ]]; then
-                sudo rm -rf ${libDisplaysDir}
-            else
-                if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
-                    sudo rm -rf ${thatDir}/DisplayVendorID-${Vid} 
-                fi
-
-                sudo rm -rf ${thatDir}/Icons.plist
-                sudo cp -r ${thatDir}/HIDPI/backup/* ${thatDir}/
-                sudo rm -rf ${thatDir}/HIDPI
-            fi
+        2) sudo rm -rf ${libDisplaysDir}
         ;;
         *) 
 
