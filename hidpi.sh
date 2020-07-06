@@ -92,7 +92,8 @@ else
     exit 0
 fi
 
-if [[ "${systemVersion}" -ge "15" ]]; then
+# Starting from macOS Big Sur (16), this method no longer works
+if [[ "${systemVersion}" == "15" ]]; then
     sudo mount -uw / && killall Finder
 fi
 
@@ -184,26 +185,41 @@ EEF
     get_edid
 
     thisDir=$(dirname $0)
-    thatDir="/System/Library/Displays/Contents/Resources/Overrides"
-    Overrides="\/System\/Library\/Displays\/Contents\/Resources\/Overrides"
-    
-    DICON="com\.apple\.cinema-display"
-    imacicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
-    mbpicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
-    mbicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
-    lgicon=${Overrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
-    proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
-
-    if [[ ! -d ${thatDir}/HIDPI/backup ]]; then
-        echo "${langBackingUp}"
-        sudo mkdir -p ${thatDir}/HIDPI/backup
-        sudo cp ${thatDir}/Icons.plist ${thatDir}/HIDPI/backup/
-        if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
-            sudo cp -r ${thatDir}/DisplayVendorID-${Vid} ${thatDir}/HIDPI/backup/
-        fi
+    libDisplaysDir="/Library/Displays"
+    thatDir="${libDisplaysDir}/Contents/Resources/Overrides"
+    thatSysDir="/System${thatDir}"
+    Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
+    sysOverrides="\/System${Overrides}"
+    if [[ "${systemVersion}" -le "15" ]]; then
+        thatDir=${thatSysDir}
+        Overrides=${sysOverrides}
     fi
     
-    generate_restore_cmd
+    DICON="com\.apple\.cinema-display"
+    imacicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
+    mbpicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
+    mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
+    lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
+    proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
+
+    if [[ ! -d ${thatDir} && "${systemVersion}" -ge "16" ]]; then
+        sudo mkdir -p ${thatDir}
+    fi
+
+    # In Big Sur+ files are created in a seperate dir, not necessary to backup
+    if [[ "${systemVersion}" -le "15" ]]; then
+        if [[ ! -d ${thatDir}/HIDPI/backup ]]; then
+            echo "${langBackingUp}"
+            sudo mkdir -p ${thatDir}/HIDPI/backup
+            sudo cp ${thatSysDir}/Icons.plist ${thatDir}/HIDPI/backup/
+
+            if [[ -d ${thatSysDir}/DisplayVendorID-${Vid} ]]; then
+                sudo cp -r ${thatSysDir}/DisplayVendorID-${Vid} ${thatDir}/HIDPI/backup/
+            fi
+        fi
+
+        generate_restore_cmd
+    fi
 }
 
 #
@@ -312,7 +328,7 @@ case ${logo} in
         ;;
     4) Picon=${lgicon}
         RP=("11" "47" "202" "114")
-        cp ${thatDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        cp ${thatSysDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     5) Picon=${proxdricon}
         RP=("5" "45" "216" "121")
@@ -549,13 +565,18 @@ function enable_hidpi_with_patch()
 # disable
 function disable()
 {
-    if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
-        sudo rm -rf ${thatDir}/DisplayVendorID-${Vid} 
+    if [[ -d ${thatDir} && "${systemVersion}" -ge "16" ]]; then
+        sudo rm -rf ${libDisplaysDir}
+    else
+        if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
+            sudo rm -rf ${thatDir}/DisplayVendorID-${Vid} 
+        fi
+
+        sudo rm -rf ${thatDir}/Icons.plist
+        sudo cp -r ${thatDir}/HIDPI/backup/* ${thatDir}/
+        sudo rm -rf ${thatDir}/HIDPI/disable
     fi
 
-    sudo rm -rf ${thatDir}/Icons.plist
-    sudo cp -r ${thatDir}/HIDPI/backup/* ${thatDir}/
-    sudo rm -rf ${thatDir}/HIDPI/disable
     echo "${langDisabled}"
 }
 
