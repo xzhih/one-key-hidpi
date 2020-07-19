@@ -170,7 +170,7 @@ EEF
     #
     get_edid
 
-    thisDir=$(dirname $0)
+    thisDir=$(cd `dirname -- $0` && pwd)
     thatDir="/System/Library/Displays/Contents/Resources/Overrides"
     Overrides="\/System\/Library\/Displays\/Contents\/Resources\/Overrides"
     
