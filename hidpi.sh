@@ -187,6 +187,11 @@ EEF
     thatDir="/System/Library/Displays/Contents/Resources/Overrides"
     Overrides="\/System\/Library\/Displays\/Contents\/Resources\/Overrides"
     
+    if [[ "${systemVersion}" -ge "16" ]]; then
+        thatDir="/Library/Displays/Contents/Resources/Overrides"
+        Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
+    fi
+
     DICON="com\.apple\.cinema-display"
     imacicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
     mbpicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
