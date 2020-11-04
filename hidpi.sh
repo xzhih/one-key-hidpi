@@ -37,7 +37,7 @@ langChooseResOp4="(4) 2560x1440 Display"
 langChooseResOp5="(5) 3000x2000 Display"
 langChooseResOpCustom="(6) Manual input resolution"
 
-if [[ "${systemLanguage}" == "zh_CN" ]]; then 
+if [[ "${systemLanguage}" == "zh_CN" ]]; then
     disableSIP="需要关闭 SIP"
     langRemoteMode="远程模式"
     langLocalMode="本地模式"
@@ -116,7 +116,7 @@ function get_edid()
         for display in "${gDisplayInf[@]}"
         do
             let index++
-            MonitorName=("$(echo ${display:190:24} | xxd -p -r)") 
+            MonitorName=("$(echo ${display:190:24} | xxd -p -r)")
             VendorID=${display:16:4}
             ProductID=${gMonitor:22:2}${gMonitor:20:2}
 
@@ -137,7 +137,7 @@ function get_edid()
 
         read -p "${langChooseDis}: " selection
         case $selection in
-            [[:digit:]]* ) 
+            [[:digit:]]* )
                 # Lower selection (arrays start at zero).
                 if ((selection < 1 || selection > index)); then
                     echo "${langEnterError}";
@@ -147,7 +147,7 @@ function get_edid()
                 gMonitor=${gDisplayInf[$selection]}
                 ;;
 
-            * ) 
+            * )
                 echo "${langEnterError}";
                 exit 0
                 ;;
@@ -165,28 +165,28 @@ function get_edid()
     # echo ${Pid}
     # echo $EDID
 }
- 
+
 # init
 function init()
 {
 #
 cat << EEF
-  _    _   _____   _____    _____    _____ 
+  _    _   _____   _____    _____    _____
  | |  | | |_   _| |  __ \  |  __ \  |_   _|
- | |__| |   | |   | |  | | | |__) |   | |  
- |  __  |   | |   | |  | | |  ___/    | |  
- | |  | |  _| |_  | |__| | | |       _| |_ 
+ | |__| |   | |   | |  | | | |__) |   | |
+ |  __  |   | |   | |  | | |  ___/    | |
+ | |  | |  _| |_  | |__| | | |       _| |_
  |_|  |_| |_____| |_____/  |_|      |_____|
-                                           
+
 ============================================
 EEF
     #
     get_edid
 
     thisDir=$(dirname $0)
-    thatDir="/System/Library/Displays/Contents/Resources/Overrides"
-    Overrides="\/System\/Library\/Displays\/Contents\/Resources\/Overrides"
-    
+    thatDir="/Library/Displays/Contents/Resources/Overrides"
+    Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
+
     DICON="com\.apple\.cinema-display"
     imacicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
     mbpicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
@@ -202,7 +202,7 @@ EEF
             sudo cp -r ${thatDir}/DisplayVendorID-${Vid} ${thatDir}/HIDPI/backup/
         fi
     fi
-    
+
     generate_restore_cmd
 }
 
@@ -233,7 +233,7 @@ function get_edid()
         echo '------------------------------------'
         read -p "Choose the display: " selection
         case $selection in
-            [[:digit:]]* ) 
+            [[:digit:]]* )
                 if ((selection < 1 || selection > index)); then
                     echo "Enter error, bye";
                     exit 0
@@ -241,7 +241,7 @@ function get_edid()
                 let selection-=1
                 gMonitor=${gDisplayInf[$selection]}
                 ;;
-            * ) 
+            * )
                 echo "Enter error, bye";
                 exit 0
                 ;;
@@ -260,7 +260,7 @@ function get_edid()
 get_edid
 
 if [[ -d ../DisplayVendorID-${Vid} ]]; then
-    rm -rf ../DisplayVendorID-${Vid} 
+    rm -rf ../DisplayVendorID-${Vid}
 fi
 
 rm -rf ../Icons.plist
@@ -329,7 +329,7 @@ case ${logo} in
     echo "${langEnterError}";
     exit 0
     ;;
-esac 
+esac
 
 if [[ ${Picon} ]]; then
     DICON=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.icns"
@@ -352,7 +352,7 @@ function main()
     dpiFile=${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}
     sudo chmod -R 777 ${thisDir}/tmp/
 
-# 
+#
 cat > "${dpiFile}" <<-\CCC
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -550,7 +550,7 @@ function enable_hidpi_with_patch()
 function disable()
 {
     if [[ -d ${thatDir}/DisplayVendorID-${Vid} ]]; then
-        sudo rm -rf ${thatDir}/DisplayVendorID-${Vid} 
+        sudo rm -rf ${thatDir}/DisplayVendorID-${Vid}
     fi
 
     sudo rm -rf ${thatDir}/Icons.plist
@@ -578,12 +578,12 @@ case ${input} in
     ;;
     3) disable
     ;;
-    *) 
+    *)
 
     echo "${langEnterError}";
     exit 0
     ;;
-esac 
+esac
 }
 
 start
