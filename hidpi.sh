@@ -184,8 +184,8 @@ EEF
     get_edid
 
     thisDir=$(dirname $0)
-    thatDir="/System/Library/Displays/Contents/Resources/Overrides"
-    Overrides="\/System\/Library\/Displays\/Contents\/Resources\/Overrides"
+    thatDir="/Library/Displays/Contents/Resources/Overrides"
+    Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
     
     DICON="com\.apple\.cinema-display"
     imacicon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
