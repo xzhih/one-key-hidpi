@@ -1,12 +1,18 @@
 #!/bin/bash
 
-sipInfo=("$(csrutil status)")
-systemVersion=($(sw_vers -productVersion | cut -d "." -f 2))
+cat << EEF
+  _    _   _____   _____    _____    _____ 
+ | |  | | |_   _| |  __ \  |  __ \  |_   _|
+ | |__| |   | |   | |  | | | |__) |   | |  
+ |  __  |   | |   | |  | | |  ___/    | |  
+ | |  | |  _| |_  | |__| | | |       _| |_ 
+ |_|  |_| |_____| |_____/  |_|      |_____|
+                                           
+============================================
+EEF
+
 systemLanguage=($(locale | grep LANG | sed s/'LANG='// | tr -d '"' | cut -d "." -f 1))
 
-disableSIP="Need to disable SIP"
-langRemoteMode="Remote Mode"
-langLocalMode="Local Mode"
 langDisplay="Display"
 langMonitors="Monitors"
 langIndex="Index"
@@ -41,9 +47,6 @@ langChooseResOp5="(5) 3000x2000 Display"
 langChooseResOpCustom="(6) Manual input resolution"
 
 if [[ "${systemLanguage}" == "zh_CN" ]]; then 
-    disableSIP="需要关闭 SIP"
-    langRemoteMode="远程模式"
-    langLocalMode="本地模式"
     langDisplay="显示器"
     langMonitors="显示器"
     langIndex="序号"
@@ -76,26 +79,6 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langChooseResOp4="(4) 2560x1440 显示屏"
     langChooseResOp5="(5) 3000x2000 显示屏"
     langChooseResOpCustom="(6) 手动输入分辨率"
-fi
-
-downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
-# downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev"
-# downloadHost="http://127.0.0.1:8080"
-
-shellDir="$(cd `dirname -- $0` && pwd)"
-
-if [ -d "${shellDir}/displayIcons" ];then
-    echo $langLocalMode
-    downloadHost="file://${shellDir}"
-else
-    echo $langRemoteMode
-fi
-
-if [[ "${sipInfo}" == *"Filesystem Protections: disabled"* ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled." ]] || [[ "$(awk '{print $5}' <<< "${sipInfo}")" == "disabled" ]]; then
-    :
-else
-    echo "${disableSIP}";
-    exit 1
 fi
 
 function get_edid()
@@ -171,48 +154,41 @@ function get_edid()
 # init
 function init()
 {
-#
-cat << EEF
-  _    _   _____   _____    _____    _____ 
- | |  | | |_   _| |  __ \  |  __ \  |_   _|
- | |__| |   | |   | |  | | | |__) |   | |  
- |  __  |   | |   | |  | | |  ___/    | |  
- | |  | |  _| |_  | |__| | | |       _| |_ 
- |_|  |_| |_____| |_____/  |_|      |_____|
-                                           
-============================================
-EEF
-    #
-    get_edid
+	get_edid
 
-    thisDir=$(cd `dirname -- $0` && pwd)
-    libDisplaysDir="/Library/Displays"
-    thatDir="${libDisplaysDir}/Contents/Resources/Overrides"
-    thatSysDir="/System${thatDir}"
-    Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
-    sysOverrides="\/System${Overrides}"
-    
-    DICON="com\.apple\.cinema-display"
-    imacicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
-    mbpicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
-    mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
-    lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
-    proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
+    currentDir="$(cd `dirname -- $0` && pwd)"
+	libDisplaysDir="/Library/Displays"
+	targetDir="${libDisplaysDir}/Contents/Resources/Overrides"
+	sysDisplayDir="/System${targetDir}"
+	Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
+	sysOverrides="\/System${Overrides}"
 
-    if [[ ! -d ${thatDir}/HIDPI ]]; then
-        sudo mkdir -p ${thatDir}/HIDPI
+	DICON="com\.apple\.cinema-display"
+	imacicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
+	mbpicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
+	mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
+	lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
+	proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
+
+	if [[ ! -d ${targetDir}/HIDPI ]]; then
+		sudo mkdir -p ${targetDir}/HIDPI
+	fi
+
+    downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
+    if [ -d "${currentDir}/displayIcons" ];then
+        downloadHost="file://${currentDir}"
     fi
 
-    generate_restore_cmd
+	generate_restore_cmd
 }
 
 #
 function generate_restore_cmd()
 {
 #
-rm -rf ${thisDir}/tmp/
-mkdir -p ${thisDir}/tmp/
-cat > "${thisDir}/tmp/disable" <<-\CCC
+rm -rf ${currentDir}/tmp/
+mkdir -p ${currentDir}/tmp/
+cat > "${currentDir}/tmp/disable" <<-\CCC
 #!/bin/sh
 
 function get_edid()
@@ -282,8 +258,8 @@ esac
 echo "HIDPI Disabled"
 CCC
 
-sudo mv ${thisDir}/tmp/disable ${thatDir}/HIDPI/
-sudo chmod +x ${thatDir}/HIDPI/disable
+sudo mv ${currentDir}/tmp/disable ${targetDir}/HIDPI/
+sudo chmod +x ${targetDir}/HIDPI/disable
 
 }
 
@@ -291,10 +267,10 @@ sudo chmod +x ${thatDir}/HIDPI/disable
 function choose_icon()
 {
     #
-    rm -rf ${thisDir}/tmp/
-    mkdir -p ${thisDir}/tmp/
-    mkdir -p ${thisDir}/tmp/DisplayVendorID-${Vid}
-    curl -fsSL "${downloadHost}/Icons.plist" -o ${thisDir}/tmp/Icons.plist
+    rm -rf ${currentDir}/tmp/
+    mkdir -p ${currentDir}/tmp/
+    mkdir -p ${currentDir}/tmp/DisplayVendorID-${Vid}
+    curl -fsSL "${downloadHost}/Icons.plist" -o ${currentDir}/tmp/Icons.plist
 
     echo ""
     echo "-------------------------------------"
@@ -313,29 +289,29 @@ read -p "${langInputChoice} [1~6]: " logo
 case ${logo} in
     1) Picon=${imacicon}
         RP=("33" "68" "160" "90")
-        curl -fsSL "${downloadHost}/displayIcons/iMac.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/iMac.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     2) Picon=${mbicon}
         RP=("52" "66" "122" "76")
-        curl -fsSL "${downloadHost}/displayIcons/MacBook.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/MacBook.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     3) Picon=${mbpicon}
         RP=("40" "62" "147" "92")
-        curl -fsSL "${downloadHost}/displayIcons/MacBookPro.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/MacBookPro.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     4) Picon=${lgicon}
         RP=("11" "47" "202" "114")
-        cp ${thatSysDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        cp ${sysDisplayDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     5) Picon=${proxdricon}
         RP=("5" "45" "216" "121")
-        curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.icns" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
-        if [[ ! -f ${thatDir}/DisplayVendorID-610/DisplayProductID-ae2f_Landscape.tiff ]]; then
-            curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.tiff" -o ${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.tiff
+        curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        if [[ ! -f ${targetDir}/DisplayVendorID-610/DisplayProductID-ae2f_Landscape.tiff ]]; then
+            curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.tiff" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.tiff
             Picon=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.tiff"
         fi
         ;;
-    6) rm -rf ${thisDir}/tmp/Icons.plist
+    6) rm -rf ${currentDir}/tmp/Icons.plist
         ;;
     *)
 
@@ -346,14 +322,14 @@ esac
 
 if [[ ${Picon} ]]; then
     DICON=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.icns"
-    /usr/bin/sed -i "" "s/VID/${Vid}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/PID/${Pid}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/PICON/${Picon}/g" ${thisDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/DICON/${DICON}/g" ${thisDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/VID/${Vid}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/PID/${Pid}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/PICON/${Picon}/g" ${currentDir}/tmp/Icons.plist
+    /usr/bin/sed -i "" "s/DICON/${DICON}/g" ${currentDir}/tmp/Icons.plist
 fi
 
 }
@@ -361,9 +337,9 @@ fi
 # main
 function main()
 {
-    sudo mkdir -p ${thisDir}/tmp/DisplayVendorID-${Vid}
-    dpiFile=${thisDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}
-    sudo chmod -R 777 ${thisDir}/tmp/
+    sudo mkdir -p ${currentDir}/tmp/DisplayVendorID-${Vid}
+    dpiFile=${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}
+    sudo chmod -R 777 ${currentDir}/tmp/
 
 # 
 cat > "${dpiFile}" <<-\CCC
@@ -447,11 +423,11 @@ FFF
 # end
 function end()
 {
-    sudo chown -R root:wheel ${thisDir}/tmp/
-    sudo chmod -R 0755 ${thisDir}/tmp/
-    sudo chmod 0644 ${thisDir}/tmp/DisplayVendorID-${Vid}/*
-    sudo cp -r ${thisDir}/tmp/* ${thatDir}/
-    sudo rm -rf ${thisDir}/tmp
+    sudo chown -R root:wheel ${currentDir}/tmp/
+    sudo chmod -R 0755 ${currentDir}/tmp/
+    sudo chmod 0644 ${currentDir}/tmp/DisplayVendorID-${Vid}/*
+    sudo cp -r ${currentDir}/tmp/* ${targetDir}/
+    sudo rm -rf ${currentDir}/tmp
     sudo defaults write /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled -bool YES
     echo "${langEnabled}"
     echo "${langEnabledLog}"
@@ -569,7 +545,7 @@ function disable()
 
     read -p "${langInputChoice} [1~2]: " input
     case ${input} in
-        1) sudo /usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ${thatDir}/Icons.plist
+        1) sudo /usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ${targetDir}/Icons.plist
         ;;
         2) sudo rm -rf ${libDisplaysDir}
         ;;
