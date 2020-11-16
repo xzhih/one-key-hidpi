@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat << EEF
+cat <<EEF
   _    _   _____   _____    _____    _____ 
  | |  | | |_   _| |  __ \  |  __ \  |_   _|
  | |__| |   | |   | |  | | | |__) |   | |  
@@ -11,6 +11,7 @@ cat << EEF
 ============================================
 EEF
 
+currentDir="$(cd $(dirname -- $0) && pwd)"
 systemLanguage=($(locale | grep LANG | sed s/'LANG='// | tr -d '"' | cut -d "." -f 1))
 
 langDisplay="Display"
@@ -46,7 +47,7 @@ langChooseResOp4="(4) 2560x1440 Display"
 langChooseResOp5="(5) 3000x2000 Display"
 langChooseResOpCustom="(6) Manual input resolution"
 
-if [[ "${systemLanguage}" == "zh_CN" ]]; then 
+if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langDisplay="显示器"
     langMonitors="显示器"
     langIndex="序号"
@@ -81,8 +82,7 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langChooseResOpCustom="(6) 手动输入分辨率"
 fi
 
-function get_edid()
-{
+function get_edid() {
     local index=0
     local selection=0
 
@@ -98,10 +98,9 @@ function get_edid()
         echo "--------------------------------------------------------"
 
         # Show monitors.
-        for display in "${gDisplayInf[@]}"
-        do
+        for display in "${gDisplayInf[@]}"; do
             let index++
-            MonitorName=("$(echo ${display:190:24} | xxd -p -r)") 
+            MonitorName=("$(echo ${display:190:24} | xxd -p -r)")
             VendorID=${display:16:4}
             ProductID=${gMonitor:22:2}${gMonitor:20:2}
 
@@ -122,20 +121,20 @@ function get_edid()
 
         read -p "${langChooseDis}: " selection
         case $selection in
-            [[:digit:]]* ) 
-                # Lower selection (arrays start at zero).
-                if ((selection < 1 || selection > index)); then
-                    echo "${langEnterError}";
-                    exit 1
-                fi
-                let selection-=1
-                gMonitor=${gDisplayInf[$selection]}
-                ;;
-
-            * ) 
-                echo "${langEnterError}";
+        [[:digit:]]*)
+            # Lower selection (arrays start at zero).
+            if ((selection < 1 || selection > index)); then
+                echo "${langEnterError}"
                 exit 1
-                ;;
+            fi
+            let selection-=1
+            gMonitor=${gDisplayInf[$selection]}
+            ;;
+
+        *)
+            echo "${langEnterError}"
+            exit 1
+            ;;
         esac
     else
         gMonitor=${gDisplayInf}
@@ -150,49 +149,44 @@ function get_edid()
     # echo ${Pid}
     # echo $EDID
 }
- 
+
 # init
-function init()
-{
-	get_edid
+function init() {
+    rm -rf ${currentDir}/tmp/
+    mkdir -p ${currentDir}/tmp/
 
-    currentDir="$(cd `dirname -- $0` && pwd)"
-	libDisplaysDir="/Library/Displays"
-	targetDir="${libDisplaysDir}/Contents/Resources/Overrides"
-	sysDisplayDir="/System${targetDir}"
-	Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
-	sysOverrides="\/System${Overrides}"
+    libDisplaysDir="/Library/Displays"
+    targetDir="${libDisplaysDir}/Contents/Resources/Overrides"
+    sysDisplayDir="/System${targetDir}"
+    Overrides="\/Library\/Displays\/Contents\/Resources\/Overrides"
+    sysOverrides="\/System${Overrides}"
 
-	DICON="com\.apple\.cinema-display"
-	imacicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
-	mbpicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
-	mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
-	lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
-	proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
-
-	if [[ ! -d ${targetDir}/HIDPI ]]; then
-		sudo mkdir -p ${targetDir}/HIDPI
-	fi
+    if [[ ! -d "${targetDir}" ]]; then
+        sudo mkdir -p "${targetDir}"
+    fi
 
     downloadHost="https://raw.githubusercontent.com/xzhih/one-key-hidpi/master"
-    if [ -d "${currentDir}/displayIcons" ];then
+    if [ -d "${currentDir}/displayIcons" ]; then
         downloadHost="file://${currentDir}"
     fi
 
-	generate_restore_cmd
+    DICON="com\.apple\.cinema-display"
+    imacicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a032\.tiff"
+    mbpicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a030\-e1e1df\.tiff"
+    mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
+    lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
+    proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
+    
+    get_edid
+    generate_restore_cmd
 }
 
 #
-function generate_restore_cmd()
-{
-#
-rm -rf ${currentDir}/tmp/
-mkdir -p ${currentDir}/tmp/
-cat > "${currentDir}/tmp/disable" <<-\CCC
-#!/bin/sh
+function generate_restore_cmd() {
 
-function get_edid()
-{
+    cat >"$(cd && pwd)/.hidpi-disable" <<-\CCC
+#!/bin/sh
+function get_edid() {
     local index=0
     local selection=0
     gDisplayInf=($(ioreg -lw0 | grep -i "IODisplayEDID" | sed -e "/[^<]*</s///" -e "s/\>//"))
@@ -201,26 +195,25 @@ function get_edid()
         echo '------------------------------------'
         echo '  Index  |  VendorID  |  ProductID  '
         echo '------------------------------------'
-        for display in "${gDisplayInf[@]}"
-        do
+        for display in "${gDisplayInf[@]}"; do
             let index++
             printf "    %d    |    ${display:16:4}    |    ${gMonitor:22:2}${gMonitor:20:2}\n" $index
         done
         echo '------------------------------------'
         read -p "Choose the display: " selection
         case $selection in
-            [[:digit:]]* ) 
-                if ((selection < 1 || selection > index)); then
-                    echo "Enter error, bye";
-                    exit 1
-                fi
-                let selection-=1
-                gMonitor=${gDisplayInf[$selection]}
-                ;;
-            * ) 
-                echo "Enter error, bye";
+        [[:digit:]]*)
+            if ((selection < 1 || selection > index)); then
+                echo "Enter error, bye"
                 exit 1
-                ;;
+            fi
+            let selection-=1
+            gMonitor=${gDisplayInf[$selection]}
+            ;;
+        *)
+            echo "Enter error, bye"
+            exit 1
+            ;;
         esac
     else
         gMonitor=${gDisplayInf}
@@ -235,7 +228,8 @@ function get_edid()
 
 get_edid
 
-rootPath="../../../../../.."
+rootPath="../.."
+restorePath="${rootPath}/Library/Displays/Contents/Resources/Overrides"
 
 echo ""
 echo "(1) Disable HIDPI on this monitor"
@@ -244,13 +238,20 @@ echo ""
 
 read -p "Enter your choice [1~2]: " input
 case ${input} in
-    1) ${rootPath}/usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ../Icons.plist
+1)
+    if [[ -f "${restorePath}/Icons.plist" ]]; then
+        ${rootPath}/usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" "${restorePath}/Icons.plist"
+    fi
+    if [[ -d "${restorePath}/DisplayVendorID-${Vid}" ]]; then
+        rm -rf "${restorePath}/DisplayVendorID-${Vid}"
+    fi
     ;;
-    2) rm -rf ${rootPath}/Library/Displays
+2)
+    rm -rf "${restorePath}"
     ;;
-    *) 
+*)
 
-    echo "Enter error, bye";
+    echo "Enter error, bye"
     exit 1
     ;;
 esac
@@ -258,15 +259,13 @@ esac
 echo "HIDPI Disabled"
 CCC
 
-sudo mv ${currentDir}/tmp/disable ${targetDir}/HIDPI/
-sudo chmod +x ${targetDir}/HIDPI/disable
+    chmod +x "$(cd && pwd)/.hidpi-disable"
 
 }
 
 # choose_icon
-function choose_icon()
-{
-    #
+function choose_icon() {
+
     rm -rf ${currentDir}/tmp/
     mkdir -p ${currentDir}/tmp/
     mkdir -p ${currentDir}/tmp/DisplayVendorID-${Vid}
@@ -284,26 +283,31 @@ function choose_icon()
     echo "(5) Pro Display XDR"
     echo "(6) ${langNotChange}"
     echo ""
-#
-read -p "${langInputChoice} [1~6]: " logo
-case ${logo} in
-    1) Picon=${imacicon}
+
+    read -p "${langInputChoice} [1~6]: " logo
+    case ${logo} in
+    1)
+        Picon=${imacicon}
         RP=("33" "68" "160" "90")
         curl -fsSL "${downloadHost}/displayIcons/iMac.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
-    2) Picon=${mbicon}
+    2)
+        Picon=${mbicon}
         RP=("52" "66" "122" "76")
         curl -fsSL "${downloadHost}/displayIcons/MacBook.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
-    3) Picon=${mbpicon}
+    3)
+        Picon=${mbpicon}
         RP=("40" "62" "147" "92")
         curl -fsSL "${downloadHost}/displayIcons/MacBookPro.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
-    4) Picon=${lgicon}
+    4)
+        Picon=${lgicon}
         RP=("11" "47" "202" "114")
         cp ${sysDisplayDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
-    5) Picon=${proxdricon}
+    5)
+        Picon=${proxdricon}
         RP=("5" "45" "216" "121")
         curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         if [[ ! -f ${targetDir}/DisplayVendorID-610/DisplayProductID-ae2f_Landscape.tiff ]]; then
@@ -311,38 +315,37 @@ case ${logo} in
             Picon=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.tiff"
         fi
         ;;
-    6) rm -rf ${currentDir}/tmp/Icons.plist
+    6)
+        rm -rf ${currentDir}/tmp/Icons.plist
         ;;
     *)
 
-    echo "${langEnterError}";
-    exit 1
-    ;;
-esac 
+        echo "${langEnterError}"
+        exit 1
+        ;;
+    esac
 
-if [[ ${Picon} ]]; then
-    DICON=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.icns"
-    /usr/bin/sed -i "" "s/VID/${Vid}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/PID/${Pid}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/PICON/${Picon}/g" ${currentDir}/tmp/Icons.plist
-    /usr/bin/sed -i "" "s/DICON/${DICON}/g" ${currentDir}/tmp/Icons.plist
-fi
+    if [[ ${Picon} ]]; then
+        DICON=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.icns"
+        /usr/bin/sed -i "" "s/VID/${Vid}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/PID/${Pid}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/PICON/${Picon}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/DICON/${DICON}/g" ${currentDir}/tmp/Icons.plist
+    fi
 
 }
 
 # main
-function main()
-{
+function main() {
     sudo mkdir -p ${currentDir}/tmp/DisplayVendorID-${Vid}
     dpiFile=${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}
     sudo chmod -R 777 ${currentDir}/tmp/
 
-# 
-cat > "${dpiFile}" <<-\CCC
+    cat >"${dpiFile}" <<-\CCC
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -357,58 +360,63 @@ cat > "${dpiFile}" <<-\CCC
             <array>
 CCC
 
-echo ""
-echo "------------------------------------------"
-echo "|********** "${langChooseRes}" ***********|"
-echo "------------------------------------------"
-echo ${langChooseResOp1}
-echo ${langChooseResOp2}
-echo ${langChooseResOp3}
-echo ${langChooseResOp4}
-echo ${langChooseResOp5}
-echo ${langChooseResOpCustom}
-echo ""
+    echo ""
+    echo "------------------------------------------"
+    echo "|********** "${langChooseRes}" ***********|"
+    echo "------------------------------------------"
+    echo ${langChooseResOp1}
+    echo ${langChooseResOp2}
+    echo ${langChooseResOp3}
+    echo ${langChooseResOp4}
+    echo ${langChooseResOp5}
+    echo ${langChooseResOpCustom}
+    echo ""
 
-#
-read -p "${langInputChoice}: " res
-case ${res} in
-    1 ) create_res_1 1680x945 1440x810 1280x720 1024x576
+    read -p "${langInputChoice}: " res
+    case ${res} in
+    1)
+        create_res_1 1680x945 1440x810 1280x720 1024x576
         create_res_2 1280x800 1280x720 960x600 960x540 640x360
         create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
         create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
-    ;;
-    2 ) create_res_1 1680x945 1424x802 1280x720 1024x576
+        ;;
+    2)
+        create_res_1 1680x945 1424x802 1280x720 1024x576
         create_res_2 1280x800 1280x720 960x600 960x540 640x360
         create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
         create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
-    ;;
-    3 ) create_res_1 1680x1050 1440x900 1280x800 1024x640
+        ;;
+    3)
+        create_res_1 1680x1050 1440x900 1280x800 1024x640
         create_res_2 1280x800 1280x720 960x600 960x540 640x360
         create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
         create_res_4 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
-    ;;
-    4 ) create_res_1 2560x1440 2048x1152 1920x1080 1760x990 1680x945 1440x810 1360x765 1280x720
+        ;;
+    4)
+        create_res_1 2560x1440 2048x1152 1920x1080 1760x990 1680x945 1440x810 1360x765 1280x720
         create_res_2 1360x765 1280x800 1280x720 1024x576 960x600 960x540 640x360
         create_res_3 960x540 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
         create_res_4 2048x1152 1920x1080 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
-    ;;
-    5 ) create_res_1 3000x2000 2880x1920 2250x1500 1920x1280 1680x1050 1440x900 1280x800 1024x640
+        ;;
+    5)
+        create_res_1 3000x2000 2880x1920 2250x1500 1920x1280 1680x1050 1440x900 1280x800 1024x640
         create_res_2 1280x800 1280x720 960x600 960x540 640x360
         create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
         create_res_4 1920x1280 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
-    ;;
-    6 ) custom_res
+        ;;
+    6)
+        custom_res
         create_res_2 1360x765 1280x800 1280x720 960x600 960x540 640x360
         create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
         create_res_4 1680x945 1440x810 1280x720 1024x576 960x540 840x472 800x450 640x360
-    ;;
+        ;;
     *)
-    echo "${langEnterError}";
-    exit 1
-    ;;
-esac
+        echo "${langEnterError}"
+        exit 1
+        ;;
+    esac
 
-cat >> "${dpiFile}" <<-\FFF
+    cat >>"${dpiFile}" <<-\FFF
             </array>
         <key>target-default-ppmm</key>
             <real>10.0699301</real>
@@ -421,8 +429,7 @@ FFF
 }
 
 # end
-function end()
-{
+function end() {
     sudo chown -R root:wheel ${currentDir}/tmp/
     sudo chmod -R 0755 ${currentDir}/tmp/
     sudo chmod 0644 ${currentDir}/tmp/DisplayVendorID-${Vid}/*
@@ -434,83 +441,76 @@ function end()
 }
 
 # custom resolution
-function custom_res()
-{
+function custom_res() {
     echo "${langCustomRes}"
     read -p ":" res
     create_res ${res}
 }
 
 # create resolution
-function create_res()
-{
+function create_res() {
     for res in $@; do
-    width=$(echo ${res} | cut -d x -f 1)
-    height=$(echo ${res} | cut -d x -f 2)
-    hidpi=$(printf '%08x %08x' $((${width}*2)) $((${height}*2)) | xxd -r -p | base64)
-#
-cat << OOO >> ${dpiFile}
+        width=$(echo ${res} | cut -d x -f 1)
+        height=$(echo ${res} | cut -d x -f 2)
+        hidpi=$(printf '%08x %08x' $((${width} * 2)) $((${height} * 2)) | xxd -r -p | base64)
+        #
+        cat <<OOO >>${dpiFile}
                 <data>${hidpi:0:11}AAAAB</data>
                 <data>${hidpi:0:11}AAAABACAAAA==</data>
 OOO
-done
+    done
 }
 
-function create_res_1()
-{
+function create_res_1() {
     for res in $@; do
-    width=$(echo ${res} | cut -d x -f 1)
-    height=$(echo ${res} | cut -d x -f 2)
-    hidpi=$(printf '%08x %08x' $((${width}*2)) $((${height}*2)) | xxd -r -p | base64)
-#
-cat << OOO >> ${dpiFile}
+        width=$(echo ${res} | cut -d x -f 1)
+        height=$(echo ${res} | cut -d x -f 2)
+        hidpi=$(printf '%08x %08x' $((${width} * 2)) $((${height} * 2)) | xxd -r -p | base64)
+        #
+        cat <<OOO >>${dpiFile}
                 <data>${hidpi:0:11}A</data>
 OOO
-done
+    done
 }
 
-function create_res_2()
-{
+function create_res_2() {
     for res in $@; do
-    width=$(echo ${res} | cut -d x -f 1)
-    height=$(echo ${res} | cut -d x -f 2)
-    hidpi=$(printf '%08x %08x' $((${width}*2)) $((${height}*2)) | xxd -r -p | base64)
-#
-cat << OOO >> ${dpiFile}
+        width=$(echo ${res} | cut -d x -f 1)
+        height=$(echo ${res} | cut -d x -f 2)
+        hidpi=$(printf '%08x %08x' $((${width} * 2)) $((${height} * 2)) | xxd -r -p | base64)
+        #
+        cat <<OOO >>${dpiFile}
                 <data>${hidpi:0:11}AAAABACAAAA==</data>
 OOO
-done
+    done
 }
 
-function create_res_3()
-{
+function create_res_3() {
     for res in $@; do
-    width=$(echo ${res} | cut -d x -f 1)
-    height=$(echo ${res} | cut -d x -f 2)
-    hidpi=$(printf '%08x %08x' $((${width}*2)) $((${height}*2)) | xxd -r -p | base64)
-#
-cat << OOO >> ${dpiFile}
+        width=$(echo ${res} | cut -d x -f 1)
+        height=$(echo ${res} | cut -d x -f 2)
+        hidpi=$(printf '%08x %08x' $((${width} * 2)) $((${height} * 2)) | xxd -r -p | base64)
+        #
+        cat <<OOO >>${dpiFile}
                 <data>${hidpi:0:11}AAAAB</data>
 OOO
-done
+    done
 }
 
-function create_res_4()
-{
+function create_res_4() {
     for res in $@; do
-    width=$(echo ${res} | cut -d x -f 1)
-    height=$(echo ${res} | cut -d x -f 2)
-    hidpi=$(printf '%08x %08x' $((${width}*2)) $((${height}*2)) | xxd -r -p | base64)
-#
-cat << OOO >> ${dpiFile}
+        width=$(echo ${res} | cut -d x -f 1)
+        height=$(echo ${res} | cut -d x -f 2)
+        hidpi=$(printf '%08x %08x' $((${width} * 2)) $((${height} * 2)) | xxd -r -p | base64)
+        #
+        cat <<OOO >>${dpiFile}
                 <data>${hidpi:0:11}AAAAJAKAAAA==</data>
 OOO
-done
+    done
 }
 
 # enable
-function enable_hidpi()
-{
+function enable_hidpi() {
     choose_icon
     main
     sed -i "" "/.*IODisplayEDID/d" ${dpiFile}
@@ -519,15 +519,14 @@ function enable_hidpi()
 }
 
 # patch
-function enable_hidpi_with_patch()
-{
+function enable_hidpi_with_patch() {
     choose_icon
     main
 
     version=${EDID:38:2}
     basicparams=${EDID:40:2}
     checksum=${EDID:254:2}
-    newchecksum=$(printf '%x' $((0x${checksum} + 0x${version} +0x${basicparams} - 0x04 - 0x90)) | tail -c 2)
+    newchecksum=$(printf '%x' $((0x${checksum} + 0x${version} + 0x${basicparams} - 0x04 - 0x90)) | tail -c 2)
     newedid=${EDID:0:38}0490${EDID:42:6}e6${EDID:50:204}${newchecksum}
     EDid=$(printf ${newedid} | xxd -r -p | base64)
 
@@ -536,8 +535,7 @@ function enable_hidpi_with_patch()
 }
 
 # disable
-function disable()
-{
+function disable() {
     echo ""
     echo "${langDisableOpt1}"
     echo "${langDisableOpt2}"
@@ -545,23 +543,29 @@ function disable()
 
     read -p "${langInputChoice} [1~2]: " input
     case ${input} in
-        1) sudo /usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" ${targetDir}/Icons.plist
+    1)
+        if [[ -f "${targetDir}/Icons.plist" ]]; then
+            sudo /usr/libexec/plistbuddy -c "Delete :vendors:${Vid}:products:${Pid}" "${targetDir}/Icons.plist"
+        fi
+        if [[ -d "${targetDir}/DisplayVendorID-${Vid}" ]]; then
+            sudo rm -rf "${targetDir}/DisplayVendorID-${Vid}"
+        fi
         ;;
-        2) sudo rm -rf ${libDisplaysDir}
+    2)
+        sudo rm -rf "${targetDir}"
         ;;
-        *) 
+    *)
 
-        echo "${langEnterError}";
+        echo "${langEnterError}"
         exit 1
         ;;
-    esac 
+    esac
 
     echo "${langDisabled}"
 }
 
 #
-function start()
-{
+function start() {
     init
     echo ""
     echo ${langEnableOp1}
@@ -569,21 +573,24 @@ function start()
     echo ${langEnableOp3}
     echo ""
 
-#
-read -p "${langInputChoice} [1~3]: " input
-case ${input} in
-    1) enable_hidpi
-    ;;
-    2) enable_hidpi_with_patch
-    ;;
-    3) disable
-    ;;
-    *) 
+    #
+    read -p "${langInputChoice} [1~3]: " input
+    case ${input} in
+    1)
+        enable_hidpi
+        ;;
+    2)
+        enable_hidpi_with_patch
+        ;;
+    3)
+        disable
+        ;;
+    *)
 
-    echo "${langEnterError}";
-    exit 1
-    ;;
-esac 
+        echo "${langEnterError}"
+        exit 1
+        ;;
+    esac
 }
 
 start
