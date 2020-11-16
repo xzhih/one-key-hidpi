@@ -21,7 +21,7 @@ System Preferences
 1.Remote Mode: Run this script in Terminal
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/dev/hidpi.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/xzhih/one-key-hidpi/master/hidpi.sh)"
 ```
 
 2.Local Mode: Download ZIP, decompressing it, and double click `hidpi.command` to run
