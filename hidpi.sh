@@ -197,7 +197,7 @@ function get_edid() {
         echo '------------------------------------'
         for display in "${gDisplayInf[@]}"; do
             let index++
-            printf "    %d    |    ${display:16:4}    |    ${gMonitor:22:2}${gMonitor:20:2}\n" $index
+            printf "    %d    |    ${display:16:4}    |    ${display:22:2}${display:20:2}\n" $index
         done
         echo '------------------------------------'
         read -p "Choose the display: " selection
