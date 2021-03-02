@@ -102,7 +102,7 @@ function get_edid() {
             let index++
             MonitorName=("$(echo ${display:190:24} | xxd -p -r)")
             VendorID=${display:16:4}
-            ProductID=${gMonitor:22:2}${gMonitor:20:2}
+            ProductID=${display:22:2}${display:20:2}
 
             if [[ ${VendorID} == 0610 ]]; then
                 MonitorName="Apple Display"
