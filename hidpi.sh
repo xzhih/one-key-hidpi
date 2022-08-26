@@ -48,6 +48,8 @@ langChooseResOp4="(4) 2560x1440 Display"
 langChooseResOp5="(5) 3000x2000 Display"
 langChooseResOpCustom="(6) Manual input resolution"
 
+langNoMonitFound="No monitors were found. Exiting..."
+langMonitVIDPID="Your monitor VID:PID:"
 if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langDisplay="显示器"
     langMonitors="显示器"
@@ -81,6 +83,9 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langChooseResOp4="(4) 2560x1440 显示屏"
     langChooseResOp5="(5) 3000x2000 显示屏"
     langChooseResOpCustom="(6) 手动输入分辨率"
+
+    langNoMonitFound="没有找到监视器。 退出..."
+    langMonitVIDPID="您的显示器 供应商ID:产品ID:"
 fi
 
 function get_edid() {
@@ -276,11 +281,11 @@ function init() {
 
     # Check if monitor was found
     if [[ -z $VendorID || -z $ProductID || $VendorID == 0 || $ProductID == 0 ]]; then
-        echo "No monitors found. Exiting..."
+        echo "$langNoMonitFound"
         exit 2
     fi
 
-    echo "Your monitor VID/PID: $Vid:$Pid"
+    echo "$langMonitVIDPID $Vid:$Pid"
 
     # Finally generate restore command
     generate_restore_cmd
