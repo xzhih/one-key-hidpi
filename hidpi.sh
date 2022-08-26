@@ -86,6 +86,42 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
 
     langNoMonitFound="没有找到监视器。 退出..."
     langMonitVIDPID="您的显示器 供应商ID:产品ID:"
+elif [[ "${systemLanguage}" == "uk_UA" ]]; then
+    langDisplay="Монітор"
+    langMonitors="Монітор"
+    langIndex="Номер"
+    langVendorID="ID Виробника"
+    langProductID="ID Продукту"
+    langMonitorName="Імʼя пристрою"
+    langChooseDis="Вибери монітор"
+    langInputChoice="Введи свій вибір"
+    langEnterError="Помилка вводу, бувай..."
+    langBackingUp="Зберігаю..."
+    langEnabled="Увімкнено! Перезавантаж компʼютер."
+    langDisabled="Вимкнено. Перезавантаж компʼютер."
+    langEnabledLog="Спочатку логотип виглядатиме великим, далі все виправиться"
+    langCustomRes="Введи роздільну здатність HiDPI розділену комами, як на цьому прикладі: 1680x945 1600x900 1440x810"
+
+    langChooseIcon="Вибери піктограму"
+    langNotChange="Не змінювати піктограму"
+
+    langEnableHIDPI="(%d) Увімкнути HIDPI"
+    langEnableHIDPIEDID="(%d) Увімкнути HIDPI (спробувати увімкнути з використанням EDID)"
+    langDisableHIDPI="(%d) Вимкнути HIDPI"
+
+    langDisableOpt1="(1) Вимкнути HIDPI для цього монітору"
+    langDisableOpt2="(2) Відновити заводські налаштування macOS"
+
+    langChooseRes="Налаштувати роздільну здатність"
+    langChooseResOp1="(1) 1920x1080 монітор"
+    langChooseResOp2="(2) 1920x1080 монітор (використовувати 1424x802, виправлення заниженої роздільної здатності після сну)"
+    langChooseResOp3="(3) 1920x1200 монітор"
+    langChooseResOp4="(4) 2560x1440 монітор"
+    langChooseResOp5="(5) 3000x2000 монітор"
+    langChooseResOpCustom="(6) Ввести роздільну здатність вручну"
+
+    langNoMonitFound="Моніторів не знайдено. Завершую роботу..."
+    langMonitVIDPID="ID Виробника:ID пристрою твого монітора:"
 fi
 
 function get_edid() {
