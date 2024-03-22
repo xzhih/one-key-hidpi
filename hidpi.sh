@@ -195,6 +195,7 @@ function get_edid() {
 # For Apple silicon there is no EDID. Get VID/PID in other way
 function get_vidpid_applesilicon() {
     local index=0
+    local prodnamesindex=0
     local selection=0
 
     # Apple ioreg display class
@@ -220,7 +221,9 @@ function get_vidpid_applesilicon() {
     # Get VIDs, PIDs, Prodnames
     local vends=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$vendIDQuery"))
     local prods=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodIDQuery"))
-    local prodnames=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodNameQuery"))
+    set -o noglob
+    IFS=$'\n' prodnames=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodNameQuery"))
+    set +o noglob
 
     if [[ "${#prods[@]}" -ge 2 ]]; then
 
@@ -233,24 +236,27 @@ function get_vidpid_applesilicon() {
 
         # Show monitors.
         for prod in "${prods[@]}"; do
-            MonitorName=${prodnames[$index]}
-            VendorID=${vends[$index]}
-            ProductID=${prods[$index]}
+            MonitorName=${prodnames[$prodnamesindex]}
+            VendorID=$(printf "%04x" ${vends[$index]})
+            ProductID=$(printf "%04x" ${prods[$index]})
 
             let index++
+            let prodnamesindex++
 
             if [[ ${VendorID} == 0610 ]]; then
                 MonitorName="Apple Display"
+                # No name in prodnames variable for internal display
+                let prodnamesindex--
             fi
 
             if [[ ${VendorID} == 1e6d ]]; then
                 MonitorName="LG Display"
             fi
 
-            printf "    %d    |    ${VendorID}    |     ${ProductID}    |  ${MonitorName}\n" ${index}
+            printf "    %-3d    |     ${VendorID}     |  %-12s |  ${MonitorName}\n" ${index} ${ProductID}
         done
 
-        echo "--------------------------------------------------------"
+        echo "------------------------------------------------------------"
 
         # Let user make a selection.
 
@@ -335,6 +341,7 @@ function generate_restore_cmd() {
 #!/bin/bash
 function get_vidpid_applesilicon() {
     local index=0
+    local prodnamesindex=0
     local selection=0
 
     # Apple ioreg display class
@@ -360,7 +367,9 @@ function get_vidpid_applesilicon() {
     # Get VIDs, PIDs, Prodnames
     local vends=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$vendIDQuery"))
     local prods=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodIDQuery"))
-    local prodnames=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodNameQuery"))
+    set -o noglob
+    IFS=$'\n' prodnames=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodNameQuery"))
+    set +o noglob
 
     if [[ "${#prods[@]}" -ge 2 ]]; then
         echo '              Monitors              '
@@ -369,10 +378,15 @@ function get_vidpid_applesilicon() {
         echo '------------------------------------'
         # Show monitors.
         for prod in "${prods[@]}"; do
-            MonitorName=${prodnames[$index]}
-            VendorID=${vends[$index]}
-            ProductID=${prods[$index]}
+            MonitorName=${prodnames[$prodnamesindex]}
+            VendorID=$(printf "%04x" ${vends[$index]})
+            ProductID=$(printf "%04x" ${prods[$index]})
             let index++
+            let prodnamesindex++
+            if [[ ${VendorID} == 0610 ]]; then
+                MonitorName="Apple Display"
+                let prodnamesindex--
+            fi
             printf "    %d    |    ${VendorID}    |     ${ProductID}    |  ${MonitorName}\n" ${index}
         done
 
