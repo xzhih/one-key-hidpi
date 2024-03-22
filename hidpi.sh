@@ -46,7 +46,8 @@ langChooseResOp2="(2) 1920x1080 Display (use 1424x802, fix underscaled after sle
 langChooseResOp3="(3) 1920x1200 Display"
 langChooseResOp4="(4) 2560x1440 Display"
 langChooseResOp5="(5) 3000x2000 Display"
-langChooseResOpCustom="(6) Manual input resolution"
+langChooseResOp6="(6) 3440x1440 Display"
+langChooseResOpCustom="(7) Manual input resolution"
 
 langNoMonitFound="No monitors were found. Exiting..."
 langMonitVIDPID="Your monitor VID:PID:"
@@ -82,7 +83,8 @@ if [[ "${systemLanguage}" == "zh_CN" ]]; then
     langChooseResOp3="(3) 1920x1200 显示屏"
     langChooseResOp4="(4) 2560x1440 显示屏"
     langChooseResOp5="(5) 3000x2000 显示屏"
-    langChooseResOpCustom="(6) 手动输入分辨率"
+    langChooseResOp6="(6) 3440x1440 显示屏"
+    langChooseResOpCustom="(7) 手动输入分辨率"
 
     langNoMonitFound="没有找到监视器。 退出..."
     langMonitVIDPID="您的显示器 供应商ID:产品ID:"
@@ -118,7 +120,8 @@ elif [[ "${systemLanguage}" == "uk_UA" ]]; then
     langChooseResOp3="(3) 1920x1200 монітор"
     langChooseResOp4="(4) 2560x1440 монітор"
     langChooseResOp5="(5) 3000x2000 монітор"
-    langChooseResOpCustom="(6) Ввести роздільну здатність вручну"
+    langChooseResOp6="(6) 3440x1440 монітор"
+    langChooseResOpCustom="(7) Ввести роздільну здатність вручну"
 
     langNoMonitFound="Моніторів не знайдено. Завершую роботу..."
     langMonitVIDPID="ID Виробника:ID пристрою твого монітора:"
@@ -622,6 +625,7 @@ CCC
     echo ${langChooseResOp3}
     echo ${langChooseResOp4}
     echo ${langChooseResOp5}
+    echo ${langChooseResOp6}
     echo ${langChooseResOpCustom}
     echo ""
 
@@ -658,6 +662,17 @@ CCC
         create_res_4 1920x1280 1680x1050 1440x900 1280x800 1024x640 960x540 840x472 800x450 640x360
         ;;
     6)
+        # Scale factors
+        # res 1 scf: 1         1.25      1.3333    1.4545   1.7777   2
+        create_res_1 3440x1440 2752x1152 2580x1080 2365x990 1935x810 1720x720
+        # res 2 scf: 2        2.6666
+        create_res_2 1720x720 1290x540
+        # res 3 scf: 2.6666
+        create_res_3 1290x540
+        # res 4 scf: 1.25      1.3333    1.4545   1.7777   2        2.6666
+        create_res_4 2752x1152 2580x1080 2365x990 1935x810 1720x720 1290x540
+        ;;
+    7)
         custom_res
         create_res_2 1360x765 1280x800 1280x720 960x600 960x540 640x360
         create_res_3 840x472 800x450 720x405 640x360 576x324 512x288 420x234 400x225 320x180
