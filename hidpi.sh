@@ -222,10 +222,15 @@ function get_vidpid_applesilicon() {
     local prodNameQuery="$prodAttrsQuery$prodname$value$get"
 
     # Get VIDs, PIDs, Prodnames
-    local vends=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$vendIDQuery"))
-    local prods=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodIDQuery"))
+    # local vends=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$vendIDQuery"))
+    # local prods=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodIDQuery"))
+
+    local vends=($(ioreg -l | grep "DisplayAttributes" | tail -n +2 | sed -n 's/.*"LegacyManufacturerID"=\([0-9]*\).*/\1/p'))
+    local prods=($(ioreg -l | grep "DisplayAttributes" | tail -n +2 | sed -n 's/.*"ProductID"=\([0-9]*\).*/\1/p'))
+
     set -o noglob
-    IFS=$'\n' prodnames=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodNameQuery"))
+    # IFS=$'\n' prodnames=($(ioreg -arw0 -d1 -c $appleDisplClass | xpath -q -n -e "$prodNameQuery"))
+    IFS=$'\n' prodnames=($(ioreg -l | grep "DisplayAttributes" | tail -n +2 | sed -n 's/.*"ProductName"="\([^"]*\)".*/\1/p'))
     set +o noglob
 
     if [[ "${#prods[@]}" -ge 2 ]]; then
