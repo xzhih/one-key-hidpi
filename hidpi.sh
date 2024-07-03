@@ -716,8 +716,13 @@ function end() {
 # custom resolution
 function custom_res() {
     echo "${langCustomRes}"
-    read -p ":" res
-    create_res ${res}
+    read -p ":" input_resolutions
+    
+    # Split the input into an array
+    IFS=' ' read -r -a resolution_array <<< "$input_resolutions"
+    
+    # Call the create_res function with the array elements
+    create_res "${resolution_array[@]}"
 }
 
 # create resolution
