@@ -2,5 +2,5 @@
 
 DIR="$( cd "$( dirname "$0"  )" && pwd  )"
 
-$DIR/hidpi.sh
+"$DIR/hidpi.sh"
 
