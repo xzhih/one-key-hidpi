@@ -1,13 +1,13 @@
 #!/bin/bash
 
 cat <<EEF
-  _    _   _____   _____    _____    _____ 
+  _    _   _____   _____    _____    _____
  | |  | | |_   _| |  __ \  |  __ \  |_   _|
- | |__| |   | |   | |  | | | |__) |   | |  
- |  __  |   | |   | |  | | |  ___/    | |  
- | |  | |  _| |_  | |__| | | |       _| |_ 
+ | |__| |   | |   | |  | | | |__) |   | |
+ |  __  |   | |   | |  | | |  ___/    | |
+ | |  | |  _| |_  | |__| | | |       _| |_
  |_|  |_| |_____| |_____/  |_|      |_____|
-                                           
+
 ============================================
 EEF
 
@@ -322,7 +322,7 @@ function init() {
     mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
     lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
     proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
-    
+
     if [[ $is_applesilicon == true ]]; then
         get_vidpid_applesilicon
     else
@@ -791,8 +791,8 @@ OOO
 function enable_hidpi() {
     choose_icon
     main
-    sed -i "" "/.*IODisplayEDID/d" ${dpiFile}
-    sed -i "" "/.*EDid/d" ${dpiFile}
+    /usr/bin/sed -i "" "/.*IODisplayEDID/d" ${dpiFile}
+    /usr/bin/sed -i "" "/.*EDid/d" ${dpiFile}
     end
 }
 
