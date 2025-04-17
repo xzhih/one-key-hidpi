@@ -1,13 +1,13 @@
 #!/bin/bash
 
 cat <<EEF
-  _    _   _____   _____    _____    _____ 
+  _    _   _____   _____    _____    _____
  | |  | | |_   _| |  __ \  |  __ \  |_   _|
- | |__| |   | |   | |  | | | |__) |   | |  
- |  __  |   | |   | |  | | |  ___/    | |  
- | |  | |  _| |_  | |__| | | |       _| |_ 
+ | |__| |   | |   | |  | | | |__) |   | |
+ |  __  |   | |   | |  | | |  ___/    | |
+ | |  | |  _| |_  | |__| | | |       _| |_
  |_|  |_| |_____| |_____/  |_|      |_____|
-                                           
+
 ============================================
 EEF
 
@@ -298,8 +298,7 @@ function get_vidpid_applesilicon() {
 
 # init
 function init() {
-    rm -rf ${currentDir}/tmp/
-    mkdir -p ${currentDir}/tmp/
+    TEMPDIR=$(mktemp -d)
 
     libDisplaysDir="/Library/Displays"
     targetDir="${libDisplaysDir}/Contents/Resources/Overrides"
@@ -322,7 +321,7 @@ function init() {
     mbicon=${sysOverrides}"\/DisplayVendorID\-610\/DisplayProductID\-a028\-9d9da0\.tiff"
     lgicon=${sysOverrides}"\/DisplayVendorID\-1e6d\/DisplayProductID\-5b11\.tiff"
     proxdricon=${Overrides}"\/DisplayVendorID\-610\/DisplayProductID\-ae2f\_Landscape\.tiff"
-    
+
     if [[ $is_applesilicon == true ]]; then
         get_vidpid_applesilicon
     else
@@ -527,10 +526,10 @@ CCC
 # choose_icon
 function choose_icon() {
 
-    rm -rf ${currentDir}/tmp/
-    mkdir -p ${currentDir}/tmp/
-    mkdir -p ${currentDir}/tmp/DisplayVendorID-${Vid}
-    curl -fsSL "${downloadHost}/Icons.plist" -o ${currentDir}/tmp/Icons.plist
+    rm -rf ${TEMPDIR}/
+    mkdir -p ${TEMPDIR}/
+    mkdir -p ${TEMPDIR}/DisplayVendorID-${Vid}
+    curl -fsSL "${downloadHost}/Icons.plist" -o ${TEMPDIR}/Icons.plist
 
     echo ""
     echo "-------------------------------------"
@@ -550,34 +549,34 @@ function choose_icon() {
     1)
         Picon=${imacicon}
         RP=("33" "68" "160" "90")
-        curl -fsSL "${downloadHost}/displayIcons/iMac.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/iMac.icns" -o ${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     2)
         Picon=${mbicon}
         RP=("52" "66" "122" "76")
-        curl -fsSL "${downloadHost}/displayIcons/MacBook.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/MacBook.icns" -o ${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     3)
         Picon=${mbpicon}
         RP=("40" "62" "147" "92")
-        curl -fsSL "${downloadHost}/displayIcons/MacBookPro.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/MacBookPro.icns" -o ${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     4)
         Picon=${lgicon}
         RP=("11" "47" "202" "114")
-        cp ${sysDisplayDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        cp ${sysDisplayDir}/DisplayVendorID-1e6d/DisplayProductID-5b11.icns ${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         ;;
     5)
         Picon=${proxdricon}
         RP=("5" "45" "216" "121")
-        curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.icns" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
+        curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.icns" -o ${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.icns
         if [[ ! -f ${targetDir}/DisplayVendorID-610/DisplayProductID-ae2f_Landscape.tiff ]]; then
-            curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.tiff" -o ${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.tiff
+            curl -fsSL "${downloadHost}/displayIcons/ProDisplayXDR.tiff" -o ${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}.tiff
             Picon=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.tiff"
         fi
         ;;
     6)
-        rm -rf ${currentDir}/tmp/Icons.plist
+        rm -rf ${TEMPDIR}/Icons.plist
         ;;
     *)
 
@@ -588,23 +587,23 @@ function choose_icon() {
 
     if [[ ${Picon} ]]; then
         DICON=${Overrides}"\/DisplayVendorID\-${Vid}\/DisplayProductID\-${Pid}\.icns"
-        /usr/bin/sed -i "" "s/VID/${Vid}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/PID/${Pid}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/PICON/${Picon}/g" ${currentDir}/tmp/Icons.plist
-        /usr/bin/sed -i "" "s/DICON/${DICON}/g" ${currentDir}/tmp/Icons.plist
+        /usr/bin/sed -i "" "s/VID/${Vid}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/PID/${Pid}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/RPX/${RP[0]}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/RPY/${RP[1]}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/RPW/${RP[2]}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/RPH/${RP[3]}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/PICON/${Picon}/g" ${TEMPDIR}/Icons.plist
+        /usr/bin/sed -i "" "s/DICON/${DICON}/g" ${TEMPDIR}/Icons.plist
     fi
 
 }
 
 # main
 function main() {
-    sudo mkdir -p ${currentDir}/tmp/DisplayVendorID-${Vid}
-    dpiFile=${currentDir}/tmp/DisplayVendorID-${Vid}/DisplayProductID-${Pid}
-    sudo chmod -R 777 ${currentDir}/tmp/
+    sudo mkdir -p ${TEMPDIR}/DisplayVendorID-${Vid}
+    dpiFile=${TEMPDIR}/DisplayVendorID-${Vid}/DisplayProductID-${Pid}
+    sudo chmod -R 777 ${TEMPDIR}/
 
     cat >"${dpiFile}" <<-\CCC
 <?xml version="1.0" encoding="UTF-8"?>
@@ -703,11 +702,11 @@ FFF
 
 # end
 function end() {
-    sudo chown -R root:wheel ${currentDir}/tmp/
-    sudo chmod -R 0755 ${currentDir}/tmp/
-    sudo chmod 0644 ${currentDir}/tmp/DisplayVendorID-${Vid}/*
-    sudo cp -r ${currentDir}/tmp/* ${targetDir}/
-    sudo rm -rf ${currentDir}/tmp
+    sudo chown -R root:wheel ${TEMPDIR}/
+    sudo chmod -R 0755 ${TEMPDIR}/
+    sudo chmod 0644 ${TEMPDIR}/DisplayVendorID-${Vid}/*
+    sudo cp -r ${TEMPDIR}/* ${targetDir}/
+    sudo rm -rf ${TEMPDIR}
     sudo defaults write /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled -bool YES
     echo "${langEnabled}"
     echo "${langEnabledLog}"
